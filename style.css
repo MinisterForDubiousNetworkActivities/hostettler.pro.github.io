@@ -20,7 +20,7 @@ ul, ol {
    2. Header & Navigation
    ================================ */
 
-header {
+header, #menu {
     border-bottom: 2px solid #33FF33;
     margin-bottom: 1em;
     padding-bottom: 0.5em;
@@ -93,10 +93,6 @@ code {
 a {
     color: #00FF00;
     text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
 }
 
 .special-links {

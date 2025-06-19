@@ -27,12 +27,34 @@
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico">
     <link rel="stylesheet" href="style.css">
+    <style>
+        #menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 1em 0 0 0;
+            display: flex;
+            gap: 1.5em;
+        }
+    
+        #menu a {
+            color: #00ff00; /* grün wie ein Terminal */
+            font-weight: bold;
+            border-bottom: 2px solid;
+            transition: border-color 0.2s;
+        }
+    </style>
 </head>
 <body>
     <a href="/index.de.html" class="lang-toggle">🇩🇪 Deutsch</a>
 
     <header>
         <h1 id="heading">lennart.hostettler@debian:~/</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/publications.html">Publications</a></li>
+            </ul>
+        </nav>
         <span id="subheading">
             <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br>
             CSS is bloat and fuck JavaScript <br><br>
