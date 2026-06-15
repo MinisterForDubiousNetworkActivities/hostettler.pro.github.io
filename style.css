@@ -1,11 +1,11 @@
 /* ================================
-   1. Grundlayout / Body / Typografie
+   1. Base Layout / Body / Typography
    ================================ */
 
    body {
-    background-color: #000000; /* Schwarzer Hintergrund für Hacker-Ästhetik */
-    color: #33FF33; /* Grün auf Schwarz – Retro-Terminal-Look */
-    font-family: "Courier New", Courier, monospace; /* Monospace-Schrift für Konsolenstil */
+    background-color: #000000;
+    color: #33FF33;
+    font-family: "Courier New", Courier, monospace;
     line-height: 1.6;
     padding: 20px;
     max-width: 900px;
@@ -30,11 +30,8 @@ header, #menu {
     font-size: 1.8em;
     font-weight: bold;
     color: #00FF00;
-      /* Damit der Text umbricht */
     white-space: normal;
-    /* Optional: max-width, damit der Umbruch gezielter passiert */
     max-width: 100%;
-    /* Optional: Worttrennung falls nötig */
     word-break: break-word;
 }
 
@@ -56,7 +53,7 @@ nav ul li {
 }
 
 /* ================================
-   3. Typografie (Headings, Code etc.)
+   3. Typography (Headings, Code etc.)
    ================================ */
 
 h2 {
@@ -87,7 +84,7 @@ code {
 }
 
 /* ================================
-   4. Links & Speziallinks
+   4. Links & Special Links
    ================================ */
 
 a {
@@ -98,17 +95,17 @@ a {
 .special-links {
     text-decoration: underline;
     text-decoration-thickness: 1px;
-    text-decoration-color: rgba(0, 255, 0, 0.5); /* Halbtransparentes Grün */
+    text-decoration-color: rgba(0, 255, 0, 0.5);
     text-underline-offset: 2px;
     transition: text-decoration-color 0.3s ease;
 }
 
 .special-links:hover {
-    text-decoration-color: rgba(0, 255, 0, 1); /* Stärker bei Hover */
+    text-decoration-color: rgba(0, 255, 0, 1);
 }
 
 /* ================================
-   5. Timeline / Berufserfahrung
+   5. Timeline / Work Experience
    ================================ */
 
 .timeline {
@@ -142,10 +139,10 @@ a {
 }
 
 /* ================================
-   6. Skills & Hobbies (mit Emoji Bullets)
+   6. Skills & Hobbies (with Emoji Bullets)
    ================================ */
 
-/* Skills-Einträge mit Emojis (li direkt in h4) */
+/* Skills entries with emojis (li directly in h4) */
 h4 > li {
     list-style: none;
     position: relative;
@@ -166,7 +163,7 @@ h4 > li::before {
     line-height: 1;
 }
 
-/* Hobbies-Sektion: Emoji-Bullets */
+/* Hobbies section: Emoji bullets */
 #hobbies ul {
     list-style: none;
     padding-left: 0;
@@ -202,7 +199,7 @@ footer {
 }
 
 /* ================================
-   8. Animationen / Utilities
+   8. Animations / Utilities
    ================================ */
 
 #heading::after {

