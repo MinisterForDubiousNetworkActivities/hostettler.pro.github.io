@@ -3,8 +3,8 @@
    ================================ */
 
    body {
-    background-color: #000000;
-    color: #33FF33;
+    background-color: #0d1117;
+    color: #b0c4b1;
     font-family: "Courier New", Courier, monospace;
     line-height: 1.6;
     padding: 20px;
@@ -20,8 +20,8 @@ ul, ol {
    2. Header & Navigation
    ================================ */
 
-header, #menu {
-    border-bottom: 2px solid #33FF33;
+header {
+    border-bottom: 2px solid #4af626;
     margin-bottom: 1em;
     padding-bottom: 0.5em;
 }
@@ -29,7 +29,7 @@ header, #menu {
 #heading {
     font-size: 1.8em;
     font-weight: bold;
-    color: #00FF00;
+    color: #4af626;
     white-space: normal;
     max-width: 100%;
     word-break: break-word;
@@ -45,7 +45,7 @@ nav ul {
     list-style-type: square;
     padding-left: 1em;
     margin-bottom: 2em;
-    color: #00FF00;
+    color: #4af626;
 }
 
 nav ul li {
@@ -57,28 +57,28 @@ nav ul li {
    ================================ */
 
 h2 {
-    color: #00FF00;
-    border-left: 6px solid #33FF33;
+    color: #4af626;
+    border-left: 6px solid #4af626;
     padding-left: 0.7em;
     font-size: 2.4em;
     font-weight: 900;
     text-transform: uppercase;
     margin-top: 1.5em;
     margin-bottom: 0.8em;
-    text-shadow: 0 0 8px #33FF33;
+    text-shadow: 0 0 6px rgba(74, 246, 38, 0.3);
     letter-spacing: 0.05em;
 }
 
 h2, h4 {
-    color: #00FF00;
-    border-left: 4px solid #33FF33;
+    color: #4af626;
+    border-left: 4px solid #4af626;
     padding-left: 0.5em;
 }
 
 code {
-    background-color: #003300;
+    background-color: #161b22;
     padding: 2px 4px;
-    color: #00FF00;
+    color: #4af626;
     border-radius: 4px;
     font-family: monospace;
 }
@@ -88,20 +88,20 @@ code {
    ================================ */
 
 a {
-    color: #00FF00;
+    color: #4af626;
     text-decoration: none;
 }
 
 .special-links {
     text-decoration: underline;
     text-decoration-thickness: 1px;
-    text-decoration-color: rgba(0, 255, 0, 0.5);
+    text-decoration-color: rgba(74, 246, 38, 0.4);
     text-underline-offset: 2px;
     transition: text-decoration-color 0.3s ease;
 }
 
 .special-links:hover {
-    text-decoration-color: rgba(0, 255, 0, 1);
+    text-decoration-color: rgba(74, 246, 38, 0.9);
 }
 
 /* ================================
@@ -112,7 +112,7 @@ a {
     position: relative;
     margin-left: 2em;
     padding-left: 1.5em;
-    border-left: 2px solid #33FF33;
+    border-left: 2px solid #4af626;
 }
 
 .timeline-item {
@@ -121,7 +121,7 @@ a {
 
 .timeline-date {
     font-size: 0.9em;
-    color: #33FF33;
+    color: #7a9e7a;
     margin-bottom: 0.3em;
 }
 
@@ -129,12 +129,12 @@ a {
     font-size: 1.2em;
     font-weight: bold;
     margin-bottom: 0.2em;
-    color: #00FF00;
+    color: #4af626;
 }
 
 .timeline-desc {
     font-size: 1em;
-    color: #33FF33;
+    color: #b0c4b1;
     line-height: 1.4;
 }
 
@@ -150,7 +150,7 @@ h4 > li {
     display: inline-block;
     margin: 0;
     font-weight: normal;
-    color: #00FF00;
+    color: #4af626;
 }
 
 h4 > li::before {
@@ -190,12 +190,12 @@ h4 > li::before {
    ================================ */
 
 footer {
-    border-top: 1px solid #33FF33;
+    border-top: 1px solid #4af626;
     margin-top: 2em;
     padding-top: 1em;
     font-size: 0.9em;
     text-align: center;
-    color: #33FF33;
+    color: #7a9e7a;
 }
 
 /* ================================

