@@ -2,7 +2,7 @@
    1. Base Layout / Body / Typography
    ================================ */
 
-   body {
+body {
     background-color: #0d1117;
     color: #b0c4b1;
     font-family: "Courier New", Courier, monospace;
@@ -39,6 +39,38 @@ header {
     font-size: 1em;
     margin-top: 0.5em;
     display: block;
+}
+
+#menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 1em 0 0 0;
+    display: flex;
+    gap: 1.5em;
+    flex-wrap: wrap;
+}
+
+#menu a {
+    color: #4af626;
+    font-weight: bold;
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+#menu a:hover {
+    border-bottom-color: #4af626;
+}
+
+#menu a.active {
+    border-bottom-color: #4af626;
+}
+
+#menu a.active::before {
+    content: "> ";
+}
+
+#menu a:has(svg) {
+    border-bottom: none;
 }
 
 nav ul {
@@ -81,6 +113,19 @@ code {
     color: #4af626;
     border-radius: 4px;
     font-family: monospace;
+}
+
+pre {
+    background-color: #161b22;
+    border: 1px solid #4af626;
+    padding: 1em;
+    overflow-x: auto;
+    line-height: 1.4;
+}
+
+pre code.hljs {
+    background: #161b22;
+    padding: 0;
 }
 
 /* ================================
@@ -135,54 +180,56 @@ a {
 .timeline-desc {
     font-size: 1em;
     color: #b0c4b1;
-    line-height: 1.4;
+    line-height: 1.6;
+    margin-top: 0.5em;
+    padding-left: 1.2em;
+}
+
+.timeline-desc li {
+    margin: 0.2em 0;
 }
 
 /* ================================
-   6. Skills & Hobbies (with Emoji Bullets)
+   6. CVE Posts
    ================================ */
 
-/* Skills entries with emojis (li directly in h4) */
-h4 > li {
-    list-style: none;
-    position: relative;
-    padding-left: 2.5em;
-    display: inline-block;
-    margin: 0;
-    font-weight: normal;
+.meta-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0 2em 0;
+}
+
+.meta-table td {
+    padding: 0.4em 0.8em;
+    border: 1px solid #4af626;
+}
+
+.meta-table td:first-child {
     color: #4af626;
+    font-weight: bold;
+    white-space: nowrap;
+    width: 1%;
 }
 
-h4 > li::before {
-    content: attr(data-emoji);
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.5em;
-    line-height: 1;
+.severity-medium {
+    color: #f0c040;
+    font-weight: bold;
 }
 
-/* Hobbies section: Emoji bullets */
-#hobbies ul {
-    list-style: none;
-    padding-left: 0;
+.severity-high {
+    color: #ff6600;
+    font-weight: bold;
 }
 
-#hobbies ul li {
-    position: relative;
-    padding-left: 2.5em;
-    font-size: 1.1em;
+.severity-critical {
+    color: #ff0000;
+    font-weight: bold;
 }
 
-#hobbies ul li::before {
-    content: attr(data-emoji);
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 1.25em;
-    line-height: 1;
+.post-date {
+    color: #7a9e7a;
+    font-size: 0.9em;
+    margin-bottom: 0.5em;
 }
 
 /* ================================
@@ -210,5 +257,35 @@ footer {
 @keyframes blink {
     to {
         visibility: hidden;
+    }
+}
+
+/* ================================
+   9. Mobile
+   ================================ */
+
+@media (max-width: 600px) {
+    body {
+        padding: 12px;
+    }
+
+    h2 {
+        font-size: 1.6em;
+    }
+
+    #menu ul {
+        gap: 1em;
+    }
+
+    .meta-table td {
+        font-size: 0.85em;
+        padding: 0.3em 0.5em;
+    }
+}
+
+@media (max-width: 400px) {
+    #menu ul {
+        flex-direction: column;
+        gap: 0.4em;
     }
 }

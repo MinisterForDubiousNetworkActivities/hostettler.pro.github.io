@@ -1,0 +1,5 @@
+# Findings held back pending coordinated disclosure
+findings/pending/
+posts/gymone-sqli.html
+posts/gymone-stored-xss.html
+posts/event-management-reflected-xss.html
