@@ -9,6 +9,7 @@ Commands:
 """
 
 import html as _html
+import json
 import re
 import sys
 from datetime import datetime
@@ -251,6 +252,13 @@ def severity_label(score_str):
     return f'[CVSS {m.group(1)} {m.group(2)}]' if m else f'[CVSS {score_str}]'
 
 
+def to_iso_date(date_str):
+    try:
+        return datetime.strptime(date_str.strip(), '%d/%m/%Y').strftime('%Y-%m-%d')
+    except Exception:
+        return ''
+
+
 # ── Renderers ──────────────────────────────────────────────────────────────────
 
 def render_meta_table(meta):
@@ -273,8 +281,8 @@ _POST_NAV = (
     '                <li><a href="/">Home</a></li>\n'
     '                <li><a href="/publications.html">Publications</a></li>\n'
     '                <li><a class="active" href="/cves.html">CVEs</a></li>\n'
-    f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub">{_GITHUB_SVG}</a></li>\n'
-    f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
+    f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
+    f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
     '            </ul>\n'
     '        </nav>'
 )
@@ -291,6 +299,23 @@ def render_post(f):
     canonical  = f'{BASE_URL}/posts/{slug}.html'
     desc       = f'{short}. Discovered by Lennart Hostettler.'
     page_title = f'{_html.escape(cve)} | {_html.escape(short)} | Lennart Hostettler'
+    iso_date   = to_iso_date(date)
+    json_ld    = (
+        '    <script type="application/ld+json">\n'
+        + json.dumps({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            'headline': short,
+            'datePublished': iso_date,
+            'url': canonical,
+            'author': {
+                '@type': 'Person',
+                'name': 'Lennart Hostettler',
+                'url': 'https://hostettler.pro/',
+            },
+        }, indent=4).replace('</', '<\\/')
+        + '\n    </script>\n'
+    ) if iso_date else ''
 
     return (
         '<!DOCTYPE html>\n'
@@ -307,6 +332,8 @@ def render_post(f):
         f'    <meta property="og:type" content="article">\n'
         f'    <meta property="og:url" content="{canonical}">\n'
         f'    <meta property="og:image" content="{BASE_URL}/preview-image.jpg">\n'
+        f'    <meta property="og:image:width" content="1280">\n'
+        f'    <meta property="og:image:height" content="853">\n'
         f'\n'
         f'    <meta name="twitter:card" content="summary_large_image">\n'
         f'    <meta name="twitter:title" content="{_html.escape(cve + " | " + short)}">\n'
@@ -317,6 +344,8 @@ def render_post(f):
         f'    <link rel="icon" href="/favicon.ico">\n'
         f'    <link rel="stylesheet" href="/style.css">\n'
         f'    <link rel="stylesheet" href="/assets/atom-one-dark.min.css">\n'
+        f'\n'
+        f'{json_ld}'
         f'</head>\n'
         f'<body>\n'
         f'    <header>\n'
@@ -336,6 +365,7 @@ def render_post(f):
         f'\n'
         f'    <footer>\n'
         f'        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>\n'
+        f'        <p><a href="/privacy.html">Privacy Policy</a></p>\n'
         f'    </footer>\n'
         f'    <script src="/assets/highlight.min.js"></script>\n'
         f'    <script>hljs.highlightAll();</script>\n'
@@ -371,6 +401,8 @@ def render_cves_html(findings):
         '    <meta property="og:type" content="website">\n'
         f'    <meta property="og:url" content="{BASE_URL}/cves.html">\n'
         f'    <meta property="og:image" content="{BASE_URL}/preview-image.jpg">\n'
+        '    <meta property="og:image:width" content="1280">\n'
+        '    <meta property="og:image:height" content="853">\n'
         '\n'
         '    <meta name="twitter:card" content="summary_large_image">\n'
         '    <meta name="twitter:title" content="Lennart Hostettler | CVEs">\n'
@@ -389,13 +421,12 @@ def render_cves_html(findings):
         '                <li><a href="/">Home</a></li>\n'
         '                <li><a href="/publications.html">Publications</a></li>\n'
         '                <li><a class="active" href="/cves.html">CVEs</a></li>\n'
-        f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub">{_GITHUB_SVG}</a></li>\n'
-        f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
+        f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
+        f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
         '            </ul>\n'
         '        </nav>\n'
         '        <span id="subheading">\n'
-        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br>\n'
-        '            CSS is bloat and fuck JavaScript <br><br>\n'
+        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br><br>\n'
         '            I don\'t hate Bill Gates because he\'s a reptilian lizard injecting 5G chips from the hollow earth &mdash; I hate him because he invented Windows.\n'
         '        </span>\n'
         '    </header>\n'
@@ -409,6 +440,7 @@ def render_cves_html(findings):
         '\n'
         '    <footer>\n'
         '        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>\n'
+        '        <p><a href="/privacy.html">Privacy Policy</a></p>\n'
         '    </footer>\n'
         '</body>\n'
         '</html>\n'
@@ -420,6 +452,7 @@ def render_sitemap(findings):
         ('/',                  '1.0', 'monthly'),
         ('/publications.html', '0.8', 'monthly'),
         ('/cves.html',         '0.8', 'monthly'),
+        ('/privacy.html',      '0.3', 'yearly'),
     ]
     blocks = []
     for loc, prio, freq in static:
@@ -431,9 +464,11 @@ def render_sitemap(findings):
             f'  </url>'
         )
     for f in sorted(findings, key=lambda x: x['slug']):
+        iso_date  = to_iso_date(f['meta'].get('Date', ''))
+        lastmod   = f'\n    <lastmod>{iso_date}</lastmod>' if iso_date else ''
         blocks.append(
             f'  <url>\n'
-            f'    <loc>{BASE_URL}/posts/{f["slug"]}.html</loc>\n'
+            f'    <loc>{BASE_URL}/posts/{f["slug"]}.html</loc>{lastmod}\n'
             f'    <changefreq>never</changefreq>\n'
             f'    <priority>0.7</priority>\n'
             f'  </url>'
