@@ -22,13 +22,21 @@
   </url>
 
   <url>
+    <loc>https://hostettler.pro/privacy.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
     <loc>https://hostettler.pro/posts/rpi-dashboard-auth-bypass.html</loc>
+    <lastmod>2026-06-12</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
     <loc>https://hostettler.pro/posts/rpi-dashboard-rce.html</loc>
+    <lastmod>2026-06-12</lastmod>
     <changefreq>never</changefreq>
     <priority>0.7</priority>
   </url>
