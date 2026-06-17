@@ -22,9 +22,47 @@
   </url>
 
   <url>
+    <loc>https://hostettler.pro/feeds.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://hostettler.pro/feed-all.xml</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://hostettler.pro/feed-cves.xml</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
+    <loc>https://hostettler.pro/feed-publications.xml</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <url>
     <loc>https://hostettler.pro/privacy.html</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
+  </url>
+
+  <url>
+    <loc>https://hostettler.pro/posts/gymone-sqli.html</loc>
+    <lastmod>2026-06-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://hostettler.pro/posts/gymone-stored-xss.html</loc>
+    <lastmod>2026-06-12</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.7</priority>
   </url>
 
   <url>

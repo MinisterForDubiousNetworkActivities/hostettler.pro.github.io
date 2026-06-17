@@ -15,12 +15,29 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-BASE         = Path(__file__).resolve().parent
-FINDINGS_DIR = BASE / "findings"
-POSTS_DIR    = BASE / "posts"
-CVES_HTML    = BASE / "cves.html"
-SITEMAP_XML  = BASE / "sitemap.xml"
-BASE_URL     = "https://hostettler.pro"
+BASE             = Path(__file__).resolve().parent
+FINDINGS_DIR     = BASE / "findings"
+PENDING_DIR      = BASE / "findings" / "pending"
+POSTS_DIR        = BASE / "posts"
+CVES_HTML        = BASE / "cves.html"
+SITEMAP_XML      = BASE / "sitemap.xml"
+RSS_CVES_XML     = BASE / "feed-cves.xml"
+RSS_PUBS_XML     = BASE / "feed-publications.xml"
+RSS_ALL_XML      = BASE / "feed-all.xml"
+FEEDS_HTML       = BASE / "feeds.html"
+BASE_URL         = "https://hostettler.pro"
+
+TRASH_PRODUCTS = {"online-shopping-system-advanced", "event-management"}
+
+_RSS_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" '
+    'fill="currentColor" style="vertical-align:middle">'
+    '<path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 '
+    '17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 '
+    '7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>'
+)
+
+_RSS_NAV_ITEM = f'                <li><a href="/feeds.html" title="RSS Feeds" aria-label="RSS Feeds">{_RSS_SVG}</a></li>\n'
 
 # ── SVG icons ──────────────────────────────────────────────────────────────────
 
@@ -240,6 +257,287 @@ def all_findings():
     return findings
 
 
+def _product_slug(meta):
+    raw = meta.get('Product', '')
+    m = re.match(r'\[([^\]]+)\]', raw)
+    return (m.group(1) if m else raw).strip().lower()
+
+
+def _score_key(f):
+    m = re.match(r'([\d.]+)', f['meta'].get('CVSS Score', '0').strip())
+    return float(m.group(1)) if m else 0.0
+
+
+def all_trash_findings():
+    if not PENDING_DIR.exists():
+        return []
+    findings = [
+        parse_finding(p)
+        for p in sorted(PENDING_DIR.glob('*.md'))
+        if _product_slug(parse_finding(p)['meta']) in TRASH_PRODUCTS
+    ]
+    findings.sort(key=_score_key, reverse=True)
+    return findings
+
+
+def all_undisclosed_findings():
+    if not PENDING_DIR.exists():
+        return []
+    findings = [
+        parse_finding(p)
+        for p in sorted(PENDING_DIR.glob('*.md'))
+        if _product_slug(parse_finding(p)['meta']) not in TRASH_PRODUCTS
+    ]
+    findings.sort(key=_score_key, reverse=True)
+    return findings
+
+
+# ── Stats ──────────────────────────────────────────────────────────────────────
+
+def count_publications():
+    pub_file = BASE / "publications.html"
+    if not pub_file.exists():
+        return 0
+    text = pub_file.read_text(encoding='utf-8')
+    links = re.findall(r'<a href="([^"]+)">', text)
+    return sum(1 for l in links if l.startswith('http') and 'linkedin' not in l and 'github' not in l)
+
+
+def compute_stats(findings, trash_findings, undisclosed_findings):
+    all_f = findings + trash_findings + undisclosed_findings
+    scores = []
+    for f in all_f:
+        m = re.match(r'([\d.]+)', f['meta'].get('CVSS Score', '0').strip())
+        scores.append(float(m.group(1)) if m else 0.0)
+    return {
+        'total':       len(all_f),
+        'critical':    sum(1 for s in scores if s >= 9.0),
+        'high':        sum(1 for s in scores if 7.0 <= s < 9.0),
+        'medium':      sum(1 for s in scores if 4.0 <= s < 7.0),
+        'published':   len(findings),
+        'pending':     len(undisclosed_findings),
+        'trash':       len(trash_findings),
+        'publications': count_publications(),
+    }
+
+
+def render_stats_block(stats, show_publications=True):
+    t, cr, hi, me = stats['total'], stats['critical'], stats['high'], stats['medium']
+    pu, pe, tr, pb = stats['published'], stats['pending'], stats['trash'], stats['publications']
+    pub_label = "Publications" if pb != 1 else "Publication"
+    lines = (
+        f'        <p class="stat-line">'
+        f'<b>{t}</b> CVEs &nbsp;&mdash;&nbsp; '
+        f'<span class="sev-critical">{cr} Critical</span> &middot; '
+        f'<span class="sev-high">{hi} High</span> &middot; '
+        f'<span class="sev-medium">{me} Medium</span>'
+        f'</p>\n'
+        f'        <p class="stat-line stat-muted">'
+        f'{pu} Published &middot; {pe} Pending &middot; {tr} Trash'
+        f'</p>'
+    )
+    if show_publications:
+        lines += (
+            f'\n        <p class="stat-line">'
+            f'<b>{pb}</b> {pub_label}'
+            f'</p>'
+        )
+    return lines
+
+
+def inject_stats(html_path, stats_block):
+    text = html_path.read_text(encoding='utf-8')
+    text = re.sub(
+        r'<!-- STATS_START -->.*?<!-- STATS_END -->',
+        f'<!-- STATS_START -->\n{stats_block}\n        <!-- STATS_END -->',
+        text, flags=re.DOTALL
+    )
+    html_path.write_text(text, encoding='utf-8')
+
+
+# ── RSS ────────────────────────────────────────────────────────────────────────
+
+def _rss_date(date_str):
+    try:
+        return datetime.strptime(date_str.strip(), '%d/%m/%Y').strftime('%a, %d %b %Y 00:00:00 +0000')
+    except Exception:
+        return ''
+
+
+def render_rss_cves(findings):
+    items = []
+    for f in findings:
+        title   = _html.escape(f['title'])
+        link    = f'{BASE_URL}/posts/{f["slug"]}.html'
+        pubdate = _rss_date(f['meta'].get('Date', ''))
+        score   = f['meta'].get('CVSS Score', '')
+        desc    = _html.escape(f'CVSS {score} — {re.sub(r"^CVE-[\\dX-]+ — ", "", f["title"])}')
+        items.append(
+            f'    <item>\n'
+            f'      <title>{title}</title>\n'
+            f'      <link>{link}</link>\n'
+            f'      <guid>{link}</guid>\n'
+            + (f'      <pubDate>{pubdate}</pubDate>\n' if pubdate else '')
+            + f'      <description>{desc}</description>\n'
+            f'    </item>'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+        '  <channel>\n'
+        '    <title>Lennart Hostettler | CVE Disclosures</title>\n'
+        f'    <link>{BASE_URL}/cves.html</link>\n'
+        f'    <atom:link href="{BASE_URL}/feed-cves.xml" rel="self" type="application/rss+xml"/>\n'
+        '    <description>CVE disclosures by Lennart Hostettler — Security Engineer &amp; Penetration Tester</description>\n'
+        '    <language>en</language>\n'
+        + '\n'.join(items) + '\n'
+        '  </channel>\n'
+        '</rss>\n'
+    )
+
+
+def parse_publications():
+    pub_file = BASE / "publications.html"
+    if not pub_file.exists():
+        return []
+    text  = pub_file.read_text(encoding='utf-8')
+    pubs  = []
+    for m in re.finditer(r'<p>(\d{2}/\d{2}/\d{4})\s*-\s*<a href="([^"]+)">([^<]+)</a>', text):
+        date, href, title = m.group(1), m.group(2), m.group(3).strip()
+        if href and not title.startswith('[Coming soon]'):
+            pubs.append({'date': date, 'href': href, 'title': title})
+    return pubs
+
+
+def render_rss_publications(pubs):
+    items = []
+    for p in pubs:
+        title   = _html.escape(p['title'])
+        link    = _html.escape(p['href'])
+        pubdate = _rss_date(p['date'])
+        items.append(
+            f'    <item>\n'
+            f'      <title>{title}</title>\n'
+            f'      <link>{link}</link>\n'
+            f'      <guid>{link}</guid>\n'
+            + (f'      <pubDate>{pubdate}</pubDate>\n' if pubdate else '')
+            + f'    </item>'
+        )
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+        '  <channel>\n'
+        '    <title>Lennart Hostettler | Publications</title>\n'
+        f'    <link>{BASE_URL}/publications.html</link>\n'
+        f'    <atom:link href="{BASE_URL}/feed-publications.xml" rel="self" type="application/rss+xml"/>\n'
+        '    <description>Publications and write-ups by Lennart Hostettler</description>\n'
+        '    <language>en</language>\n'
+        + '\n'.join(items) + '\n'
+        '  </channel>\n'
+        '</rss>\n'
+    )
+
+
+def render_rss_all(findings, pubs):
+    cve_items = []
+    for f in findings:
+        title   = _html.escape(f['title'])
+        link    = f'{BASE_URL}/posts/{f["slug"]}.html'
+        pubdate = _rss_date(f['meta'].get('Date', ''))
+        score   = f['meta'].get('CVSS Score', '')
+        desc    = _html.escape(f'CVSS {score} — {re.sub(r"^CVE-[\\dX-]+ — ", "", f["title"])}')
+        cve_items.append((pubdate, (
+            f'    <item>\n'
+            f'      <title>{title}</title>\n'
+            f'      <link>{link}</link>\n'
+            f'      <guid>{link}</guid>\n'
+            + (f'      <pubDate>{pubdate}</pubDate>\n' if pubdate else '')
+            + f'      <description>{desc}</description>\n'
+            f'    </item>'
+        )))
+    pub_items = []
+    for p in pubs:
+        title   = _html.escape(p['title'])
+        link    = _html.escape(p['href'])
+        pubdate = _rss_date(p['date'])
+        pub_items.append((pubdate, (
+            f'    <item>\n'
+            f'      <title>{title}</title>\n'
+            f'      <link>{link}</link>\n'
+            f'      <guid>{link}</guid>\n'
+            + (f'      <pubDate>{pubdate}</pubDate>\n' if pubdate else '')
+            + f'    </item>'
+        )))
+    all_items = sorted(cve_items + pub_items, key=lambda x: x[0], reverse=True)
+    return (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+        '  <channel>\n'
+        '    <title>Lennart Hostettler | All</title>\n'
+        f'    <link>{BASE_URL}/</link>\n'
+        f'    <atom:link href="{BASE_URL}/feed-all.xml" rel="self" type="application/rss+xml"/>\n'
+        '    <description>CVE disclosures and publications by Lennart Hostettler</description>\n'
+        '    <language>en</language>\n'
+        + '\n'.join(item for _, item in all_items) + '\n'
+        '  </channel>\n'
+        '</rss>\n'
+    )
+
+
+def render_feeds_html():
+    feeds = [
+        ('feed-all.xml',          'All',          'CVE disclosures and publications'),
+        ('feed-cves.xml',         'CVEs',          'Vulnerability disclosures'),
+        ('feed-publications.xml', 'Publications',  'Write-ups and research'),
+    ]
+    items = '\n'.join(
+        f'            <p><a href="/{slug}">{label}</a> &mdash; {desc}</p>'
+        for slug, label, desc in feeds
+    )
+    return (
+        '<!DOCTYPE html>\n'
+        '<html lang="en">\n'
+        '<head>\n'
+        '    <meta charset="UTF-8">\n'
+        '    <title>Lennart Hostettler | Feeds</title>\n'
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="All" href="{BASE_URL}/feed-all.xml">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="CVEs" href="{BASE_URL}/feed-cves.xml">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="Publications" href="{BASE_URL}/feed-publications.xml">\n'
+        '    <link rel="icon" href="/favicon.ico">\n'
+        '    <link rel="stylesheet" href="style.css">\n'
+        '</head>\n'
+        '<body>\n'
+        '    <header>\n'
+        '        <h1 id="heading">lennart.hostettler@debian:~/</h1>\n'
+        '        <nav id="menu">\n'
+        '            <ul>\n'
+        '                <li><a href="/">Home</a></li>\n'
+        '                <li><a href="/publications.html">Publications</a></li>\n'
+        '                <li><a href="/cves.html">CVEs</a></li>\n'
+        f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
+        f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
+        + _RSS_NAV_ITEM
+        + '            </ul>\n'
+        '        </nav>\n'
+        '    </header>\n'
+        '\n'
+        '    <main>\n'
+        '        <section id="feeds">\n'
+        '            <h2>Feeds</h2>\n'
+        f'{items}\n'
+        '        </section>\n'
+        '    </main>\n'
+        '\n'
+        '    <footer>\n'
+        '        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>\n'
+        '        <p><a href="/privacy.html">Privacy Policy</a></p>\n'
+        '    </footer>\n'
+        '</body>\n'
+        '</html>\n'
+    )
+
+
 # ── Severity helpers ───────────────────────────────────────────────────────────
 
 def severity_class(score_str):
@@ -283,7 +581,8 @@ _POST_NAV = (
     '                <li><a class="active" href="/cves.html">CVEs</a></li>\n'
     f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
     f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
-    '            </ul>\n'
+    + _RSS_NAV_ITEM
+    + '            </ul>\n'
     '        </nav>'
 )
 
@@ -374,7 +673,7 @@ def render_post(f):
     )
 
 
-def render_cves_html(findings):
+def render_cves_html(findings, trash_findings=None, undisclosed_findings=None, stats_block=None):
     entries = []
     for f in findings:
         date  = f['meta'].get('Date', '')
@@ -384,6 +683,46 @@ def render_cves_html(findings):
         entries.append(
             f'            <p>{_html.escape(date)} - {_html.escape(label)} '
             f'<a href="{href}">{inline_md(f["title"])}</a></p>'
+        )
+
+    undisclosed_section = ''
+    if undisclosed_findings:
+        ud_entries = []
+        for f in undisclosed_findings:
+            score = f['meta'].get('CVSS Score', '')
+            label = severity_label(score)
+            short = re.sub(r'^CVE-[\dX-]+ — ', '', f['title'])
+            short = re.sub(r'\s+in\s+\S+.*$', '', short, flags=re.IGNORECASE)
+            ud_entries.append(
+                f'            <p>Pending - {_html.escape(label)} {_html.escape(short)}</p>'
+            )
+        undisclosed_section = (
+            '\n'
+            '        <section id="undisclosed-cves">\n'
+            '            <h2>Pending / Not Yet Disclosed</h2>\n'
+            '            <p><em>Findings reported to vendors. Details withheld pending CVE assignment and coordinated disclosure.</em></p>\n'
+            + '\n'.join(ud_entries) + '\n'
+            '        </section>'
+        )
+
+    trash_section = ''
+    if trash_findings:
+        trash_entries = []
+        for f in trash_findings:
+            score = f['meta'].get('CVSS Score', '')
+            label = severity_label(score)
+            short = re.sub(r'^CVE-[\dX-]+ — ', '', f['title'])
+            short = re.sub(r'\s+in\s+\S+.*$', '', short, flags=re.IGNORECASE)
+            trash_entries.append(
+                f'            <p>Pending - {_html.escape(label)} {_html.escape(short)}</p>'
+            )
+        trash_section = (
+            '\n'
+            '        <section id="trash-cves">\n'
+            '            <h2>Trash CVEs</h2>\n'
+            '            <p><em>Low-quality findings in low-quality projects with at least a few hundred stars. Details withheld pending CVE assignment.</em></p>\n'
+            + '\n'.join(trash_entries) + '\n'
+            '        </section>'
         )
 
     return (
@@ -410,6 +749,8 @@ def render_cves_html(findings):
         f'    <meta name="twitter:image" content="{BASE_URL}/preview-image.jpg">\n'
         '\n'
         f'    <link rel="canonical" href="{BASE_URL}/cves.html">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="All" href="{BASE_URL}/feed-all.xml">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="CVE Disclosures" href="{BASE_URL}/feed-cves.xml">\n'
         '    <link rel="icon" href="/favicon.ico">\n'
         '    <link rel="stylesheet" href="style.css">\n'
         '</head>\n'
@@ -423,12 +764,14 @@ def render_cves_html(findings):
         '                <li><a class="active" href="/cves.html">CVEs</a></li>\n'
         f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
         f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
-        '            </ul>\n'
+        + _RSS_NAV_ITEM
+        + '            </ul>\n'
         '        </nav>\n'
         '        <span id="subheading">\n'
         '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br><br>\n'
         '            I don\'t hate Bill Gates because he\'s a reptilian lizard injecting 5G chips from the hollow earth &mdash; I hate him because he invented Windows.\n'
-        '        </span>\n'
+        + (f'            <br><br>\n{stats_block}\n' if stats_block else '')
+        + '        </span>\n'
         '    </header>\n'
         '\n'
         '    <main>\n'
@@ -436,6 +779,8 @@ def render_cves_html(findings):
         '            <h2>CVEs</h2>\n'
         + '\n'.join(entries) + '\n'
         '        </section>\n'
+        + trash_section + '\n'
+        + undisclosed_section + '\n'
         '    </main>\n'
         '\n'
         '    <footer>\n'
@@ -449,10 +794,14 @@ def render_cves_html(findings):
 
 def render_sitemap(findings):
     static = [
-        ('/',                  '1.0', 'monthly'),
-        ('/publications.html', '0.8', 'monthly'),
-        ('/cves.html',         '0.8', 'monthly'),
-        ('/privacy.html',      '0.3', 'yearly'),
+        ('/',                       '1.0', 'monthly'),
+        ('/publications.html',      '0.8', 'monthly'),
+        ('/cves.html',              '0.8', 'monthly'),
+        ('/feeds.html',             '0.3', 'yearly'),
+        ('/feed-all.xml',           '0.5', 'weekly'),
+        ('/feed-cves.xml',          '0.5', 'weekly'),
+        ('/feed-publications.xml',  '0.5', 'monthly'),
+        ('/privacy.html',           '0.3', 'yearly'),
     ]
     blocks = []
     for loc, prio, freq in static:
@@ -545,11 +894,27 @@ def cmd_build(args):
         print(f'  built  posts/{f["slug"]}.html')
 
     # Always rebuild index + sitemap from all findings
-    all_f = all_findings()
-    CVES_HTML.write_text(render_cves_html(all_f), encoding='utf-8')
+    all_f           = all_findings()
+    all_trash       = all_trash_findings()
+    all_undisclosed = all_undisclosed_findings()
+    stats            = compute_stats(all_f, all_trash, all_undisclosed)
+    cve_stats_block  = render_stats_block(stats, show_publications=False)
+    idx_stats_block  = render_stats_block(stats, show_publications=True)
+    CVES_HTML.write_text(render_cves_html(all_f, all_trash, all_undisclosed, cve_stats_block), encoding='utf-8')
     print('  built  cves.html')
+    inject_stats(BASE / 'index.html', idx_stats_block)
+    print('  built  index.html (stats)')
     SITEMAP_XML.write_text(render_sitemap(all_f), encoding='utf-8')
     print('  built  sitemap.xml')
+    pubs = parse_publications()
+    RSS_CVES_XML.write_text(render_rss_cves(all_f), encoding='utf-8')
+    print('  built  feed-cves.xml')
+    RSS_PUBS_XML.write_text(render_rss_publications(pubs), encoding='utf-8')
+    print('  built  feed-publications.xml')
+    RSS_ALL_XML.write_text(render_rss_all(all_f, pubs), encoding='utf-8')
+    print('  built  feed-all.xml')
+    FEEDS_HTML.write_text(render_feeds_html(), encoding='utf-8')
+    print('  built  feeds.html')
 
 
 def cmd_new(args):
