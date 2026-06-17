@@ -327,13 +327,13 @@ def render_stats_block(stats, show_publications=True):
     pub_label = "Publications" if pb != 1 else "Publication"
     lines = (
         f'        <p class="stat-line">'
-        f'<b>{t}</b> CVEs &nbsp;&mdash;&nbsp; '
+        f'<b>{pu}</b> CVEs &nbsp;&mdash;&nbsp; '
         f'<span class="sev-critical">{cr} Critical</span> &middot; '
         f'<span class="sev-high">{hi} High</span> &middot; '
         f'<span class="sev-medium">{me} Medium</span>'
         f'</p>\n'
         f'        <p class="stat-line stat-muted">'
-        f'{pu} Published &middot; {pe} Pending &middot; {tr} Trash'
+        f'{pu} Published &middot; {pe + tr} Pending'
         f'</p>'
     )
     if show_publications:
