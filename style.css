@@ -271,7 +271,27 @@ a:focus-visible {
 }
 
 /* ================================
-   6. CVE Posts
+   6. Stats
+   ================================ */
+
+.stat-line { margin: 0.2em 0; }
+.stat-muted { color: #7a9e7a; }
+.sev-critical { color: #ff0000; font-weight: bold; }
+.sev-high     { color: #ff6600; font-weight: bold; }
+.sev-medium   { color: #f0c040; font-weight: bold; }
+
+.rss-link {
+    font-size: 0.55em;
+    color: #f0c040;
+    vertical-align: middle;
+    margin-left: 0.5em;
+    opacity: 0.75;
+    transition: opacity 0.15s;
+}
+.rss-link:hover { opacity: 1; }
+
+/* ================================
+   7. CVE Posts
    ================================ */
 
 .meta-table {

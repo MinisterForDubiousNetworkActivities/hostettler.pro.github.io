@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Lennart Hostettler | CVE Disclosures</title>
+    <link>https://hostettler.pro/cves.html</link>
+    <atom:link href="https://hostettler.pro/feed-cves.xml" rel="self" type="application/rss+xml"/>
+    <description>CVE disclosures by Lennart Hostettler — Security Engineer &amp; Penetration Tester</description>
+    <language>en</language>
+    <item>
+      <title>CVE-2026-55871 — SQL Injection in GYM-One v1.1.0</title>
+      <link>https://hostettler.pro/posts/gymone-sqli.html</link>
+      <guid>https://hostettler.pro/posts/gymone-sqli.html</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 6.5 (Medium) — CVE-2026-55871 — SQL Injection in GYM-One v1.1.0</description>
+    </item>
+    <item>
+      <title>CVE-2026-55872 — Stored XSS in GYM-One v1.1.0</title>
+      <link>https://hostettler.pro/posts/gymone-stored-xss.html</link>
+      <guid>https://hostettler.pro/posts/gymone-stored-xss.html</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 8.7 (High) — CVE-2026-55872 — Stored XSS in GYM-One v1.1.0</description>
+    </item>
+    <item>
+      <title>CVE-XXXX-XXXXX — Missing Authorization / Auth Bypass in Raspberry Pi Dashboard</title>
+      <link>https://hostettler.pro/posts/rpi-dashboard-auth-bypass.html</link>
+      <guid>https://hostettler.pro/posts/rpi-dashboard-auth-bypass.html</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 9.8 (Critical) — Missing Authorization / Auth Bypass in Raspberry Pi Dashboard</description>
+    </item>
+    <item>
+      <title>CVE-XXXX-XXXXX — OS Command Injection / RCE in Raspberry Pi Dashboard</title>
+      <link>https://hostettler.pro/posts/rpi-dashboard-rce.html</link>
+      <guid>https://hostettler.pro/posts/rpi-dashboard-rce.html</guid>
+      <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 9.8 (Critical) — OS Command Injection / RCE in Raspberry Pi Dashboard</description>
+    </item>
+  </channel>
+</rss>

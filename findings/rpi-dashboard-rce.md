@@ -95,3 +95,8 @@ Sanitize `$time` using `escapeshellarg()` before passing it to `system()`:
 system('sudo /sbin/shutdown -h ' . escapeshellarg($time));
 system("sudo /sbin/shutdown -r "  . escapeshellarg($time));
 ```
+
+
+## Vendor Response
+
+The developer declined to fix the vulnerability, arguing the project is not intended to be exposed to the internet. This position ignores reality: a Shodan search returns multiple publicly reachable instances. When a patch was submitted via pull request, the response was dismissive and confrontational. When that was pointed out, it escalated further. The vulnerabilities remain unpatched as of the date of this advisory.
