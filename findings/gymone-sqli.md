@@ -65,6 +65,10 @@ An authenticated attacker with admin privileges can:
 - Extract all data from any table in the `gymone` database (user PII, password hashes, tickets)
 - Potentially write files to the filesystem via `INTO OUTFILE` depending on DB permissions
 
+## Vendor Response
+
+The maintainer responded the same day the report was submitted, patched the vulnerability promptly, and communicated throughout the process in a professional and solution-oriented manner. This is how coordinated disclosure should work.
+
 ## Remediation
 
 Replace string concatenation with prepared statements using `bind_param()`:

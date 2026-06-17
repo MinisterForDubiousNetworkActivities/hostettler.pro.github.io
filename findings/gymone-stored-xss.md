@@ -60,6 +60,10 @@ Result: The injected script executes in the admin's browser context.
 - **Credential theft** by injecting a fake login overlay
 - **Persistent** — payload fires for every admin who opens the user list until the record is deleted
 
+## Vendor Response
+
+The maintainer responded the same day the report was submitted, patched the vulnerability promptly, and communicated throughout the process in a professional and solution-oriented manner. This is how coordinated disclosure should work.
+
 ## Remediation
 
 Wrap all database output in `htmlspecialchars()` before rendering:

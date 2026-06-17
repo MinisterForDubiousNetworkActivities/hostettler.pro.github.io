@@ -99,6 +99,8 @@ $result = $conn-&gt;query($sql); // line 473</code></pre>
             <li>Extract all data from any table in the <code>gymone</code> database (user PII, password hashes, tickets)</li>
             <li>Potentially write files to the filesystem via <code>INTO OUTFILE</code> depending on DB permissions</li>
         </ul>
+        <h2>Vendor Response</h2>
+        <p>The maintainer responded the same day the report was submitted, patched the vulnerability promptly, and communicated throughout the process in a professional and solution-oriented manner. This is how coordinated disclosure should work.</p>
         <h2>Remediation</h2>
         <p>Replace string concatenation with prepared statements using <code>bind_param()</code>:</p>
         <pre><code class="language-php">$where = [];

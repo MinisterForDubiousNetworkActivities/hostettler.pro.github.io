@@ -94,6 +94,8 @@ echo &quot;&lt;td&gt;&quot; . $row[&quot;email&quot;];               // line 411
             <li><strong>Credential theft</strong> by injecting a fake login overlay</li>
             <li><strong>Persistent</strong> &mdash; payload fires for every admin who opens the user list until the record is deleted</li>
         </ul>
+        <h2>Vendor Response</h2>
+        <p>The maintainer responded the same day the report was submitted, patched the vulnerability promptly, and communicated throughout the process in a professional and solution-oriented manner. This is how coordinated disclosure should work.</p>
         <h2>Remediation</h2>
         <p>Wrap all database output in <code>htmlspecialchars()</code> before rendering:</p>
         <pre><code class="language-php">echo &quot;&lt;td&gt;&quot; . htmlspecialchars($row[&quot;firstname&quot;], ENT_QUOTES, &#x27;UTF-8&#x27;) . &quot;&lt;/td&gt;&quot;;
