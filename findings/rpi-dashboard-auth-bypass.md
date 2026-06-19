@@ -1,4 +1,4 @@
-# CVE-XXXX-XXXXX — Missing Authorization / Auth Bypass in Raspberry Pi Dashboard
+# CVE-XXXX-XXXXX — Auth Bypass in Raspberry Pi Dashboard
 
 | Field            | Value                                                                           |
 |------------------|---------------------------------------------------------------------------------|

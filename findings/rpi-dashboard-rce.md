@@ -1,4 +1,4 @@
-# CVE-XXXX-XXXXX — OS Command Injection / RCE in Raspberry Pi Dashboard
+# CVE-XXXX-XXXXX — OS Command Injection in Raspberry Pi Dashboard
 
 | Field            | Value                                                                                   |
 |------------------|-----------------------------------------------------------------------------------------|
