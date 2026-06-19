@@ -54,6 +54,8 @@ GET /admin/users/
 
 Result: The injected script executes in the admin's browser context.
 
+![alert(1) executing via the stored payload in the admin user list](/assets/gymone-xss.png)
+
 ## Impact
 
 - **Admin session hijacking** via cookie exfiltration → full account takeover

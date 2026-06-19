@@ -88,6 +88,10 @@ echo &quot;&lt;td&gt;&quot; . $row[&quot;email&quot;];               // line 411
         <p>Admin navigates to:</p>
         <pre><code class="language-http">GET /admin/users/</code></pre>
         <p>Result: The injected script executes in the admin&#x27;s browser context.</p>
+        <figure>
+            <img src="/assets/gymone-xss.png" alt="alert(1) executing via the stored payload in the admin user list">
+            <figcaption>alert(1) executing via the stored payload in the admin user list</figcaption>
+        </figure>
         <h2>Impact</h2>
         <ul>
             <li><strong>Admin session hijacking</strong> via cookie exfiltration &rarr; full account takeover</li>

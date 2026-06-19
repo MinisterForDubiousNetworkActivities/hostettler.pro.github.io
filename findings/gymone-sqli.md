@@ -47,6 +47,8 @@ GET /admin/users/?search_email='UNION SELECT 1,username,password_hash,4,5,6,7,8,
 
 Result: The `firstname` column renders the `username` of each worker, `lastname` renders the `password_hash`.
 
+![UNION SELECT exfiltrating worker credentials — bcrypt hash visible in the Keresztnév column](/assets/gymone-sqli.png)
+
 **PoC 2 — Error-based data exfiltration (Sink 2)**
 
 The COUNT query only returns a number, so UNION is not usable. Error-based injection leaks data via

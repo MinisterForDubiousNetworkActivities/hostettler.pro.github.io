@@ -184,6 +184,23 @@ def md_to_html(text):
             i += 1
             continue
 
+        # Standalone image ![caption](url)
+        if stripped.startswith('!['):
+            m = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', stripped)
+            if m:
+                flush()
+                alt = _html.escape(m.group(1))
+                src = _html.escape(m.group(2))
+                cap_html = inline_md(m.group(1))
+                cap = f'\n            <figcaption>{cap_html}</figcaption>' if alt else ''
+                output.append(
+                    f'        <figure>\n'
+                    f'            <img src="{src}" alt="{alt}">{cap}\n'
+                    f'        </figure>'
+                )
+                i += 1
+                continue
+
         # List item
         if stripped.startswith('- '):
             if state != 'ul':
@@ -248,12 +265,15 @@ def parse_finding(path):
 
 def all_findings():
     findings = [parse_finding(p) for p in sorted(FINDINGS_DIR.glob('*.md'))]
-    def date_key(f):
+    def sort_key(f):
         try:
-            return datetime.strptime(f['meta'].get('Date', '').strip(), '%d/%m/%Y')
+            date = datetime.strptime(f['meta'].get('Date', '').strip(), '%d/%m/%Y')
         except Exception:
-            return datetime.min
-    findings.sort(key=date_key, reverse=True)
+            date = datetime.min
+        m = re.search(r'CVE-\d+-(\d+)', f['meta'].get('CVE', ''))
+        cve_seq = int(m.group(1)) if m else 0
+        return (date, cve_seq)
+    findings.sort(key=sort_key, reverse=True)
     return findings
 
 
@@ -681,7 +701,7 @@ def render_cves_html(findings, trash_findings=None, undisclosed_findings=None, s
         label = severity_label(score)
         href  = f'/posts/{f["slug"]}.html'
         entries.append(
-            f'            <p>{_html.escape(date)} - {_html.escape(label)} '
+            f'            <p>{_html.escape(label)} '
             f'<a href="{href}">{inline_md(f["title"])}</a></p>'
         )
 
