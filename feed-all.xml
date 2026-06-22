@@ -13,18 +13,18 @@
       <pubDate>Thu, 05 Jun 2025 00:00:00 +0000</pubDate>
     </item>
     <item>
-      <title>CVE-2026-55872 — Stored XSS in GYM-One v1.1.0</title>
+      <title>CVE-2026-55872 — Stored XSS in GYM-One v1.4.0</title>
       <link>https://hostettler.pro/posts/gymone-stored-xss.html</link>
       <guid>https://hostettler.pro/posts/gymone-stored-xss.html</guid>
       <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
-      <description>CVSS 8.7 (High) — CVE-2026-55872 — Stored XSS in GYM-One v1.1.0</description>
+      <description>CVSS 8.7 (High) — CVE-2026-55872 — Stored XSS in GYM-One v1.4.0</description>
     </item>
     <item>
-      <title>CVE-2026-55871 — SQL Injection in GYM-One v1.1.0</title>
+      <title>CVE-2026-55871 — SQL Injection in GYM-One v1.4.0</title>
       <link>https://hostettler.pro/posts/gymone-sqli.html</link>
       <guid>https://hostettler.pro/posts/gymone-sqli.html</guid>
       <pubDate>Fri, 12 Jun 2026 00:00:00 +0000</pubDate>
-      <description>CVSS 6.5 (Medium) — CVE-2026-55871 — SQL Injection in GYM-One v1.1.0</description>
+      <description>CVSS 6.5 (Medium) — CVE-2026-55871 — SQL Injection in GYM-One v1.4.0</description>
     </item>
     <item>
       <title>CVE-XXXX-XXXXX — Auth Bypass in Raspberry Pi Dashboard</title>

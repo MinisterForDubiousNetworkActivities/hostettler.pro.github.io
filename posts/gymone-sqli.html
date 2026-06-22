@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>CVE-2026-55871 | SQL Injection in GYM-One v1.1.0 | Lennart Hostettler</title>
+    <title>CVE-2026-55871 | SQL Injection in GYM-One v1.4.0 | Lennart Hostettler</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="SQL Injection in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta name="description" content="SQL Injection in GYM-One v1.4.0. Discovered by Lennart Hostettler.">
     <meta name="robots" content="index, follow">
 
-    <meta property="og:title" content="CVE-2026-55871 | SQL Injection in GYM-One v1.1.0">
-    <meta property="og:description" content="SQL Injection in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta property="og:title" content="CVE-2026-55871 | SQL Injection in GYM-One v1.4.0">
+    <meta property="og:description" content="SQL Injection in GYM-One v1.4.0. Discovered by Lennart Hostettler.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://hostettler.pro/posts/gymone-sqli.html">
     <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
@@ -16,8 +16,8 @@
     <meta property="og:image:height" content="853">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CVE-2026-55871 | SQL Injection in GYM-One v1.1.0">
-    <meta name="twitter:description" content="SQL Injection in GYM-One v1.1.0. Discovered by Lennart Hostettler.">
+    <meta name="twitter:title" content="CVE-2026-55871 | SQL Injection in GYM-One v1.4.0">
+    <meta name="twitter:description" content="SQL Injection in GYM-One v1.4.0. Discovered by Lennart Hostettler.">
     <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
 
     <link rel="canonical" href="https://hostettler.pro/posts/gymone-sqli.html">
@@ -29,7 +29,7 @@
 {
     "@context": "https://schema.org",
     "@type": "Article",
-    "headline": "SQL Injection in GYM-One v1.1.0",
+    "headline": "SQL Injection in GYM-One v1.4.0",
     "datePublished": "2026-06-12",
     "url": "https://hostettler.pro/posts/gymone-sqli.html",
     "author": {
@@ -58,22 +58,22 @@
     <main>
 
         <p class="post-date">12/06/2026 &mdash; Security Advisory</p>
-        <h2>CVE-2026-55871 &mdash; SQL Injection in GYM-One v1.1.0</h2>
+        <h2>CVE-2026-55871 &mdash; SQL Injection in GYM-One v1.4.0</h2>
 
         <table class="meta-table">
             <tr><td>Product</td><td><a href="https://github.com/mayerbalintdev/GYM-One">GYM-One</a></td></tr>
-            <tr><td>Version</td><td>v1.1.0</td></tr>
+            <tr><td>Version</td><td>v1.4.0</td></tr>
             <tr><td>File</td><td><code>admin/users/index.php</code></td></tr>
             <tr><td>CVE</td><td>CVE-2026-55871</td></tr>
             <tr><td>CWE</td><td>CWE-89 &mdash; Improper Neutralization of Special Elements used in SQL Command</td></tr>
-            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H</td></tr>
+            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N</td></tr>
             <tr><td>CVSS Score</td><td><span class="severity-medium">6.5 (Medium)</span></td></tr>
             <tr><td>Auth Required</td><td>Yes (admin session)</td></tr>
             <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
         </table>
 
         <h2>Description</h2>
-        <p>GYM-One v1.1.0 is vulnerable to SQL Injection in <code>admin/users/index.php</code>. The GET parameters <code>search_name</code> and <code>search_email</code> are concatenated unsanitized into two separate SQL queries without prepared statements or parameterization.</p>
+        <p>GYM-One v1.4.0 is vulnerable to SQL Injection in <code>admin/users/index.php</code>. The GET parameters <code>search_name</code> and <code>search_email</code> are concatenated unsanitized into two separate SQL queries without prepared statements or parameterization.</p>
         <p><strong>Vulnerable sink 1</strong> &mdash; Data query (line 103/106):</p>
         <pre><code class="language-php">$conditions[] = &quot;firstname LIKE &#x27;%$search_name%&#x27; OR lastname LIKE &#x27;%$search_name%&#x27;&quot;;
 $conditions[] = &quot;email LIKE &#x27;%$search_email%&#x27;&quot;;
