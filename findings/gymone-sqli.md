@@ -1,13 +1,13 @@
-# CVE-2026-55871 — SQL Injection in GYM-One v1.1.0
+# CVE-2026-55871 — SQL Injection in GYM-One v1.4.0
 
 | Field            | Value                                                                 |
 |------------------|-----------------------------------------------------------------------|
 | Product          | [GYM-One](https://github.com/mayerbalintdev/GYM-One)                 |
-| Version          | v1.1.0                                                                |
+| Version          | v1.4.0                                                                |
 | File             | `admin/users/index.php`                                               |
 | CVE              | CVE-2026-55871                                                         |
 | CWE              | CWE-89 — Improper Neutralization of Special Elements used in SQL Command |
-| CVSS 3.1 Vector  | AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H                                  |
+| CVSS 3.1 Vector  | AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:N                                  |
 | CVSS Score       | 6.5 (Medium)                                                            |
 | Auth Required    | Yes (admin session)                                                   |
 | Discovered by    | Lennart Hostettler                                                    |
@@ -15,7 +15,7 @@
 
 ## Description
 
-GYM-One v1.1.0 is vulnerable to SQL Injection in `admin/users/index.php`. The GET parameters
+GYM-One v1.4.0 is vulnerable to SQL Injection in `admin/users/index.php`. The GET parameters
 `search_name` and `search_email` are concatenated unsanitized into two separate SQL queries without
 prepared statements or parameterization.
 

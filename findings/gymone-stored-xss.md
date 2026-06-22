@@ -1,9 +1,9 @@
-# CVE-2026-55872 — Stored XSS in GYM-One v1.1.0
+# CVE-2026-55872 — Stored XSS in GYM-One v1.4.0
 
 | Field            | Value                                                                        |
 |------------------|------------------------------------------------------------------------------|
 | Product          | [GYM-One](https://github.com/mayerbalintdev/GYM-One)                        |
-| Version          | v1.1.0                                                                       |
+| Version          | v1.4.0                                                                       |
 | File             | `admin/users/index.php`                                                      |
 | CVE              | CVE-2026-55872                                                         |
 | CWE              | CWE-79 — Improper Neutralization of Input During Web Page Generation         |
@@ -15,7 +15,7 @@
 
 ## Description
 
-GYM-One v1.1.0 is vulnerable to Stored Cross-Site Scripting in `admin/users/index.php`.
+GYM-One v1.4.0 is vulnerable to Stored Cross-Site Scripting in `admin/users/index.php`.
 The fields `firstname`, `lastname`, and `email` from the `users` table are rendered directly
 into HTML without `htmlspecialchars()` or any output encoding:
 
