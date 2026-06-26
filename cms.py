@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-cms.py — Static page generator for hostettler.pro CVE findings
+cms.py — Static page generator for hostettler.pro CVE findings and publications
 
 Commands:
-  build [slug]     Generate HTML for all findings (or one by slug)
-  new <slug>       Create a new finding template in findings/
-  list             List all findings with metadata
+  build [slug]              Generate HTML for all findings/publications (or one by slug)
+  new <slug>                Create a new CVE finding template in findings/
+  new-pub <slug> [Title]    Create a new publication template in publications/
+  list                      List all CVE findings with metadata
 """
 
 import html as _html
@@ -18,8 +19,10 @@ from pathlib import Path
 BASE             = Path(__file__).resolve().parent
 FINDINGS_DIR     = BASE / "findings"
 PENDING_DIR      = BASE / "findings" / "pending"
+PUBLICATIONS_DIR = BASE / "publications"
 POSTS_DIR        = BASE / "posts"
 CVES_HTML        = BASE / "cves.html"
+PUBLICATIONS_HTML = BASE / "publications.html"
 SITEMAP_XML      = BASE / "sitemap.xml"
 RSS_CVES_XML     = BASE / "feed-cves.xml"
 RSS_PUBS_XML     = BASE / "feed-publications.xml"
@@ -27,7 +30,33 @@ RSS_ALL_XML      = BASE / "feed-all.xml"
 FEEDS_HTML       = BASE / "feeds.html"
 BASE_URL         = "https://hostettler.pro"
 
+# External publications and coming-soon entries (not in publications/ markdown dir)
+_EXTERNAL_PUBS = [
+    {
+        'date':  '05/06/2025',
+        'href':  'https://blog.smarttecs.com/posts/2025-003-lockbit-database-analysis/',
+        'title': 'Analyzing the LockBit Database Dump',
+    },
+]
+_COMING_SOON_PUBS = [
+    {'date': 'XX/XX/2027', 'title': "[Coming soon] AppArmor is(not) Easy!"},
+    {'date': 'XX/XX/2026', 'title': "[Coming soon] Attacking the ‘Sparkasse’ with EvilGinx"},
+]
+
 TRASH_PRODUCTS = {"online-shopping-system-advanced", "event-management"}
+
+_PUB_TEMPLATE = """\
+# {title}
+
+| Field       | Value             |
+|-------------|-------------------|
+| Date        | {date}            |
+| Description | One-line summary  |
+
+## Introduction
+
+...
+"""
 
 _RSS_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" '
@@ -312,15 +341,60 @@ def all_undisclosed_findings():
     return findings
 
 
+# ── Publication articles ───────────────────────────────────────────────────────
+
+def parse_pub_article(path):
+    text  = path.read_text(encoding='utf-8')
+    lines = text.split('\n')
+    i = 0
+
+    title = ''
+    while i < len(lines):
+        if lines[i].startswith('# '):
+            title = lines[i][2:].strip()
+            i += 1
+            break
+        i += 1
+
+    while i < len(lines) and not lines[i].strip():
+        i += 1
+
+    meta = {}
+    while i < len(lines) and lines[i].strip().startswith('|'):
+        line = lines[i].strip()
+        if re.match(r'^\|[-| :]+\|$', line):
+            i += 1
+            continue
+        inner = line.strip('|')
+        parts = inner.split('|', 1)
+        if len(parts) == 2:
+            key = parts[0].strip()
+            val = parts[1].strip()
+            if key and key.lower() != 'field':
+                meta[key] = val
+        i += 1
+
+    body = '\n'.join(lines[i:])
+    return {'slug': path.stem, 'title': title, 'meta': meta, 'body': body}
+
+
+def all_pub_articles():
+    if not PUBLICATIONS_DIR.exists():
+        return []
+    articles = [parse_pub_article(p) for p in sorted(PUBLICATIONS_DIR.glob('*.md'))]
+    def _date_key(a):
+        try:
+            return datetime.strptime(a['meta'].get('Date', '').strip(), '%d/%m/%Y')
+        except Exception:
+            return datetime.min
+    articles.sort(key=_date_key, reverse=True)
+    return articles
+
+
 # ── Stats ──────────────────────────────────────────────────────────────────────
 
 def count_publications():
-    pub_file = BASE / "publications.html"
-    if not pub_file.exists():
-        return 0
-    text = pub_file.read_text(encoding='utf-8')
-    links = re.findall(r'<a href="([^"]+)">', text)
-    return sum(1 for l in links if l.startswith('http') and 'linkedin' not in l and 'github' not in l)
+    return len(all_pub_articles()) + len(_EXTERNAL_PUBS)
 
 
 def compute_stats(findings, trash_findings, undisclosed_findings):
@@ -417,15 +491,22 @@ def render_rss_cves(findings):
 
 
 def parse_publications():
-    pub_file = BASE / "publications.html"
-    if not pub_file.exists():
-        return []
-    text  = pub_file.read_text(encoding='utf-8')
-    pubs  = []
-    for m in re.finditer(r'<p>(\d{2}/\d{2}/\d{4})\s*-\s*<a href="([^"]+)">([^<]+)</a>', text):
-        date, href, title = m.group(1), m.group(2), m.group(3).strip()
-        if href and not title.startswith('[Coming soon]'):
-            pubs.append({'date': date, 'href': href, 'title': title})
+    pubs = list(_EXTERNAL_PUBS)
+    for a in all_pub_articles():
+        date = a['meta'].get('Date', '')
+        if date and not date.startswith('XX'):
+            pubs.append({
+                'date':  date,
+                'href':  f'{BASE_URL}/posts/{a["slug"]}.html',
+                'title': a['title'],
+            })
+    try:
+        pubs.sort(
+            key=lambda p: datetime.strptime(p['date'].strip(), '%d/%m/%Y'),
+            reverse=True,
+        )
+    except Exception:
+        pass
     return pubs
 
 
@@ -606,6 +687,19 @@ _POST_NAV = (
     '        </nav>'
 )
 
+_PUB_POST_NAV = (
+    '        <nav id="menu">\n'
+    '            <ul>\n'
+    '                <li><a href="/">Home</a></li>\n'
+    '                <li><a class="active" href="/publications.html">Publications</a></li>\n'
+    '                <li><a href="/cves.html">CVEs</a></li>\n'
+    f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
+    f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
+    + _RSS_NAV_ITEM
+    + '            </ul>\n'
+    '        </nav>'
+)
+
 
 def render_post(f):
     slug       = f['slug']
@@ -690,6 +784,171 @@ def render_post(f):
         f'    <script>hljs.highlightAll();</script>\n'
         f'</body>\n'
         f'</html>\n'
+    )
+
+
+def render_pub_post(p):
+    slug       = p['slug']
+    title      = p['title']
+    meta       = p['meta']
+    body       = p['body']
+    date       = meta.get('Date', '')
+    desc       = meta.get('Description', title)
+    canonical  = f'{BASE_URL}/posts/{slug}.html'
+    page_title = f'{_html.escape(title)} | Lennart Hostettler'
+    iso_date   = to_iso_date(date)
+    json_ld    = (
+        '    <script type="application/ld+json">\n'
+        + json.dumps({
+            '@context': 'https://schema.org',
+            '@type': 'Article',
+            'headline': title,
+            'datePublished': iso_date,
+            'url': canonical,
+            'author': {
+                '@type': 'Person',
+                'name': 'Lennart Hostettler',
+                'url': 'https://hostettler.pro/',
+            },
+        }, indent=4).replace('</', '<\\/')
+        + '\n    </script>\n'
+    ) if iso_date else ''
+
+    return (
+        '<!DOCTYPE html>\n'
+        '<html lang="en">\n'
+        '<head>\n'
+        f'    <meta charset="UTF-8">\n'
+        f'    <title>{page_title}</title>\n'
+        f'    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        f'    <meta name="description" content="{_html.escape(desc)}">\n'
+        f'    <meta name="robots" content="index, follow">\n'
+        f'\n'
+        f'    <meta property="og:title" content="{_html.escape(title)}">\n'
+        f'    <meta property="og:description" content="{_html.escape(desc)}">\n'
+        f'    <meta property="og:type" content="article">\n'
+        f'    <meta property="og:url" content="{canonical}">\n'
+        f'    <meta property="og:image" content="{BASE_URL}/preview-image.jpg">\n'
+        f'    <meta property="og:image:width" content="1280">\n'
+        f'    <meta property="og:image:height" content="853">\n'
+        f'\n'
+        f'    <meta name="twitter:card" content="summary_large_image">\n'
+        f'    <meta name="twitter:title" content="{_html.escape(title)}">\n'
+        f'    <meta name="twitter:description" content="{_html.escape(desc)}">\n'
+        f'    <meta name="twitter:image" content="{BASE_URL}/preview-image.jpg">\n'
+        f'\n'
+        f'    <link rel="canonical" href="{canonical}">\n'
+        f'    <link rel="icon" href="/favicon.ico">\n'
+        f'    <link rel="stylesheet" href="/style.css">\n'
+        f'    <link rel="stylesheet" href="/assets/atom-one-dark.min.css">\n'
+        f'\n'
+        f'{json_ld}'
+        f'</head>\n'
+        f'<body>\n'
+        f'    <header>\n'
+        f'        <h1 id="heading">lennart.hostettler@debian:~/publications</h1>\n'
+        f'{_PUB_POST_NAV}\n'
+        f'    </header>\n'
+        f'\n'
+        f'    <main>\n'
+        f'\n'
+        f'        <p class="post-date">{_html.escape(date)}</p>\n'
+        f'        <h2>{inline_md(title)}</h2>\n'
+        f'\n'
+        f'{md_to_html(body)}\n'
+        f'    </main>\n'
+        f'\n'
+        f'    <footer>\n'
+        f'        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>\n'
+        f'        <p><a href="/privacy.html">Privacy Policy</a></p>\n'
+        f'    </footer>\n'
+        f'    <script src="/assets/highlight.min.js"></script>\n'
+        f'    <script>hljs.highlightAll();</script>\n'
+        f'</body>\n'
+        f'</html>\n'
+    )
+
+
+def render_publications_html(pub_articles):
+    entries = []
+    for a in pub_articles:
+        date = a['meta'].get('Date', '')
+        href = f'/posts/{a["slug"]}.html'
+        entries.append(
+            f'            <p>{_html.escape(date)} &mdash; '
+            f'<a href="{href}">{inline_md(a["title"])}</a></p>'
+        )
+    for p in _EXTERNAL_PUBS:
+        entries.append(
+            f'            <p>{_html.escape(p["date"])} &mdash; '
+            f'<a href="{_html.escape(p["href"])}">{_html.escape(p["title"])}</a></p>'
+        )
+    for cs in _COMING_SOON_PUBS:
+        entries.append(
+            f'            <p>{_html.escape(cs["date"])} &mdash; '
+            f'<a href="">{_html.escape(cs["title"])}</a></p>'
+        )
+
+    return (
+        '<!DOCTYPE html>\n'
+        '<html lang="en">\n'
+        '<head>\n'
+        '    <meta charset="UTF-8">\n'
+        '    <title>Lennart Hostettler | Publications</title>\n'
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+        '    <meta name="description" content="Publications and write-ups by Lennart Hostettler &ndash; Security Engineer &amp; Penetration Tester from Germany.">\n'
+        '    <meta name="robots" content="index, follow">\n'
+        '\n'
+        '    <meta property="og:title" content="Lennart Hostettler | Publications">\n'
+        '    <meta property="og:description" content="Publications and write-ups by Lennart Hostettler &ndash; Security Engineer &amp; Penetration Tester from Germany.">\n'
+        '    <meta property="og:type" content="website">\n'
+        f'    <meta property="og:url" content="{BASE_URL}/publications.html">\n'
+        f'    <meta property="og:image" content="{BASE_URL}/preview-image.jpg">\n'
+        '    <meta property="og:image:width" content="1280">\n'
+        '    <meta property="og:image:height" content="853">\n'
+        '\n'
+        '    <meta name="twitter:card" content="summary_large_image">\n'
+        '    <meta name="twitter:title" content="Lennart Hostettler | Publications">\n'
+        '    <meta name="twitter:description" content="Publications and write-ups by Lennart Hostettler &ndash; Security Engineer &amp; Penetration Tester from Germany.">\n'
+        f'    <meta name="twitter:image" content="{BASE_URL}/preview-image.jpg">\n'
+        '\n'
+        f'    <link rel="canonical" href="{BASE_URL}/publications.html">\n'
+        f'    <link rel="alternate" type="application/rss+xml" title="Publications" href="{BASE_URL}/feed-publications.xml">\n'
+        '    <link rel="icon" href="/favicon.ico">\n'
+        '    <link rel="stylesheet" href="style.css">\n'
+        '</head>\n'
+        '<body>\n'
+        '    <header>\n'
+        '        <h1 id="heading">lennart.hostettler@debian:~/</h1>\n'
+        '        <nav id="menu">\n'
+        '            <ul>\n'
+        '                <li><a href="/">Home</a></li>\n'
+        '                <li><a class="active" href="/publications.html">Publications</a></li>\n'
+        '                <li><a href="/cves.html">CVEs</a></li>\n'
+        f'                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub">{_GITHUB_SVG}</a></li>\n'
+        f'                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn">{_LINKEDIN_SVG}</a></li>\n'
+        + _RSS_NAV_ITEM
+        + '            </ul>\n'
+        '        </nav>\n'
+        '        <span id="subheading">\n'
+        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br><br>\n'
+        '            I don\'t hate Bill Gates because he\'s a reptilian lizard injecting 5G chips from the hollow earth &mdash; I hate him because he invented Windows.\n'
+        '        </span>\n'
+        '    </header>\n'
+        '\n'
+        '    <main>\n'
+        '        <section id="publications">\n'
+        '            <h2>Publications</h2>\n'
+        + '\n'.join(entries) + '\n'
+        '        </section>\n'
+        '    </main>\n'
+        '\n'
+        '    <footer>\n'
+        '        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>\n'
+        '        <p><a href="/privacy.html">Privacy Policy</a></p>\n'
+        '    </footer>\n'
+        '</body>\n'
+        '</html>\n'
     )
 
 
@@ -900,21 +1159,35 @@ def cmd_build(args):
 
     if args:
         slug = args[0].removesuffix('.md')
-        path = FINDINGS_DIR / f'{slug}.md'
-        if not path.exists():
-            print(f'error: findings/{slug}.md not found', file=sys.stderr)
+        # Try findings first, then publications
+        finding_path = FINDINGS_DIR / f'{slug}.md'
+        pub_path     = PUBLICATIONS_DIR / f'{slug}.md'
+        if finding_path.exists():
+            f   = parse_finding(finding_path)
+            out = POSTS_DIR / f'{f["slug"]}.html'
+            out.write_text(render_post(f), encoding='utf-8')
+            print(f'  built  posts/{f["slug"]}.html')
+        elif pub_path.exists():
+            p   = parse_pub_article(pub_path)
+            out = POSTS_DIR / f'{p["slug"]}.html'
+            out.write_text(render_pub_post(p), encoding='utf-8')
+            print(f'  built  posts/{p["slug"]}.html')
+        else:
+            print(f'error: findings/{slug}.md and publications/{slug}.md not found', file=sys.stderr)
             sys.exit(1)
-        targets = [parse_finding(path)]
     else:
-        targets = all_findings()
-
-    for f in targets:
-        out = POSTS_DIR / f'{f["slug"]}.html'
-        out.write_text(render_post(f), encoding='utf-8')
-        print(f'  built  posts/{f["slug"]}.html')
+        for f in all_findings():
+            out = POSTS_DIR / f'{f["slug"]}.html'
+            out.write_text(render_post(f), encoding='utf-8')
+            print(f'  built  posts/{f["slug"]}.html')
+        for p in all_pub_articles():
+            out = POSTS_DIR / f'{p["slug"]}.html'
+            out.write_text(render_pub_post(p), encoding='utf-8')
+            print(f'  built  posts/{p["slug"]}.html')
 
     # Always rebuild index + sitemap from all findings
     all_f           = all_findings()
+    all_pub         = all_pub_articles()
     all_trash       = all_trash_findings()
     all_undisclosed = all_undisclosed_findings()
     stats            = compute_stats(all_f, all_trash, all_undisclosed)
@@ -922,6 +1195,8 @@ def cmd_build(args):
     idx_stats_block  = render_stats_block(stats, show_publications=True)
     CVES_HTML.write_text(render_cves_html(all_f, all_trash, all_undisclosed, cve_stats_block), encoding='utf-8')
     print('  built  cves.html')
+    PUBLICATIONS_HTML.write_text(render_publications_html(all_pub), encoding='utf-8')
+    print('  built  publications.html')
     inject_stats(BASE / 'index.html', idx_stats_block)
     print('  built  index.html (stats)')
     SITEMAP_XML.write_text(render_sitemap(all_f), encoding='utf-8')
@@ -952,6 +1227,25 @@ def cmd_new(args):
     print(f'  created findings/{slug}.md')
 
 
+def cmd_new_pub(args):
+    if not args:
+        print('usage: cms.py new-pub <slug> [Title]', file=sys.stderr)
+        sys.exit(1)
+    slug  = args[0].removesuffix('.md')
+    title = ' '.join(args[1:]) if len(args) > 1 else slug.replace('-', ' ').title()
+    PUBLICATIONS_DIR.mkdir(exist_ok=True)
+    path = PUBLICATIONS_DIR / f'{slug}.md'
+    if path.exists():
+        print(f'error: publications/{slug}.md already exists', file=sys.stderr)
+        sys.exit(1)
+    today = datetime.now().strftime('%d/%m/%Y')
+    path.write_text(
+        _PUB_TEMPLATE.replace('{title}', title).replace('{date}', today),
+        encoding='utf-8',
+    )
+    print(f'  created publications/{slug}.md')
+
+
 def cmd_list(args):
     findings = all_findings()
     if not findings:
@@ -974,7 +1268,7 @@ def cmd_list(args):
 
 # ── Entry point ────────────────────────────────────────────────────────────────
 
-COMMANDS = {'build': cmd_build, 'new': cmd_new, 'list': cmd_list}
+COMMANDS = {'build': cmd_build, 'new': cmd_new, 'new-pub': cmd_new_pub, 'list': cmd_list}
 
 def main():
     args = sys.argv[1:]
