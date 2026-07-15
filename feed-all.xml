@@ -7,6 +7,12 @@
     <description>CVE disclosures and publications by Lennart Hostettler</description>
     <language>en</language>
     <item>
+      <title>How I Broke redir While Trying to Reproduce a Different CVE</title>
+      <link>https://hostettler.pro/posts/redir-off-by-one.html</link>
+      <guid>https://hostettler.pro/posts/redir-off-by-one.html</guid>
+      <pubDate>Wed, 15 Jul 2026 00:00:00 +0000</pubDate>
+    </item>
+    <item>
       <title>Analyzing the LockBit Database Dump</title>
       <link>https://blog.smarttecs.com/posts/2025-003-lockbit-database-analysis/</link>
       <guid>https://blog.smarttecs.com/posts/2025-003-lockbit-database-analysis/</guid>

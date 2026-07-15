@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>How I Broke redir While Trying to Reproduce a Different CVE | Lennart Hostettler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Trying to reproduce CVE-2020-37182 in redir to practice binary exploitation, I found a different, undisclosed bug instead.">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="How I Broke redir While Trying to Reproduce a Different CVE">
+    <meta property="og:description" content="Trying to reproduce CVE-2020-37182 in redir to practice binary exploitation, I found a different, undisclosed bug instead.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://hostettler.pro/posts/redir-off-by-one.html">
+    <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="853">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How I Broke redir While Trying to Reproduce a Different CVE">
+    <meta name="twitter:description" content="Trying to reproduce CVE-2020-37182 in redir to practice binary exploitation, I found a different, undisclosed bug instead.">
+    <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <link rel="canonical" href="https://hostettler.pro/posts/redir-off-by-one.html">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/assets/atom-one-dark.min.css">
+
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "How I Broke redir While Trying to Reproduce a Different CVE",
+    "datePublished": "2026-07-15",
+    "url": "https://hostettler.pro/posts/redir-off-by-one.html",
+    "author": {
+        "@type": "Person",
+        "name": "Lennart Hostettler",
+        "url": "https://hostettler.pro/"
+    }
+}
+    </script>
+</head>
+<body>
+    <header>
+        <h1 id="heading">lennart.hostettler@debian:~/publications</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a class="active" href="/publications.html">Publications</a></li>
+                <li><a href="/cves.html">CVEs</a></li>
+                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></a></li>
+                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a></li>
+                <li><a href="/feeds.html" title="RSS Feeds" aria-label="RSS Feeds"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg></a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <p class="post-date">15/07/2026</p>
+        <h2>How I Broke redir While Trying to Reproduce a Different CVE</h2>
+
+        <p>I wanted to get better at binary exploitation. Not &quot;read about it&quot; better &mdash; actually-pop-a-shell better. The plan was simple: pick a small, real CVE in a small, real C program, reproduce it, and use it as a training ground for stack layout, ASLR, canaries, the whole thing.</p>
+        <p><a href="https://github.com/troglobit/redir">redir</a> looked perfect. It&#x27;s a tiny TCP port redirector, a few hundred lines of C, and it has an assigned CVE: <strong>CVE-2020-37182</strong>, a stack-based buffer overflow in <code>doproxyconnect()</code>.</p>
+        <p>I never got to exploit it. I found a different bug instead.</p>
+        <h2>The CVE I Was Actually Chasing</h2>
+        <p><code>doproxyconnect()</code> handles redir&#x27;s <code>-x/--connect</code> option, which sends a <code>CONNECT</code> string to an upstream proxy before relaying traffic. In the vulnerable versions it looked like this:</p>
+        <pre><code class="language-c">void doproxyconnect(int socket)
+{
+	char buf[128];
+
+	sprintf((char *)&amp;buf, &quot;CONNECT %s HTTP/1.0\n\n&quot;, connect_str);
+	...
+}</code></pre>
+        <p><code>buf</code> is a fixed 128-byte stack buffer. <code>connect_str</code> comes straight from <code>-x</code> on the command line, with no length check anywhere. Hand <code>sprintf()</code> a long enough string and it keeps writing past <code>buf</code>, straight through the stack frame. Textbook stack smashing &mdash; canary, saved RBP, return address, all fair game if you control the length and content of <code>-x</code>.</p>
+        <p>That&#x27;s exactly the kind of bug I wanted to cut my teeth on.</p>
+        <h2>The Dead End</h2>
+        <p>I cloned the repo, built it with a sanitizer-enabled toolchain, and threw a long <code>-x</code> argument at it, expecting a crash I could start walking back from a core dump.</p>
+        <p>Nothing. No crash, no ASAN complaint, nothing.</p>
+        <p>So I went and read the current source instead of trusting the CVE description:</p>
+        <pre><code class="language-c">void doproxyconnect(int socket)
+{
+	char buf[128];
+	int rc;
+
+	snprintf(buf, sizeof(buf), &quot;CONNECT %s HTTP/1.0\n\n&quot;, connect_str);
+	...
+}</code></pre>
+        <p><code>sprintf()</code> had already been swapped for <code>snprintf()</code>, bounded to <code>sizeof(buf)</code>. Commit history confirmed it &mdash; fixed under <code>Fix #15: use snprintf() rather than sprintf()</code>, the same cleanup pass that closed out <code>CVE-2020-37182</code>. The version checked out was already patched. My training target was gone before I&#x27;d written a single payload.</p>
+        <h2>Poking Around Instead of Giving Up</h2>
+        <p>Rather than switch projects, I kept the sanitizer build around and just started throwing traffic at redir the way it&#x27;s meant to be used &mdash; as an actual TCP redirector, with a listener on one end and <code>nc</code> on the other, varying payload sizes and the <code>-z</code> buffer-size option along the way.</p>
+        <p>A little while in, one of those runs didn&#x27;t behave like the others.</p>
+        <h2>Tooling</h2>
+        <p>Nothing exotic &mdash; deliberately boring tools, used carefully. In case anyone wants to repeat this:</p>
+        <h4>&gt; Build: autotools with sanitizers baked in at configure time</h4>
+        <pre><code class="language-bash">git clone https://github.com/troglobit/redir
+cd redir
+./autogen.sh
+./configure CC=gcc CFLAGS=&quot;-fsanitize=address,undefined -g&quot;
+make</code></pre>
+        <p><code>-fsanitize=address</code> (ASan) is what actually catches the out-of-bounds write, with a stack trace pointing at both the write and the original allocation. <code>-fsanitize=undefined</code> (UBSan) rides along for free. <code>-g</code> keeps debug symbols so the sanitizer&#x27;s stack traces resolve to <code>file:line</code> instead of raw addresses.</p>
+        <h4>&gt; Run it in the foreground, not as a daemon</h4>
+        <p><code>-n</code> keeps redir attached to the terminal instead of forking off and daemonizing. Sanitizer reports go to stderr &mdash; if redir detached, I&#x27;d never have seen the report land.</p>
+        <h4>&gt; Shrink the buffer to make iteration fast</h4>
+        <p>Default <code>bufsize</code> is <code>BUFSIZ</code> (8192 here). That works fine to trigger the bug, but during exploration I ran with <code>-z 256</code> &mdash; a smaller buffer means smaller, faster, easier-to-read payloads while I was still trying different message shapes and hadn&#x27;t yet pinned down that the actual trigger condition was simply &quot;a message of exactly <code>bufsize</code> bytes,&quot; nothing about its content.</p>
+        <h4>&gt; A dummy target on the other end</h4>
+        <pre><code class="language-bash">nc -lp 9998</code></pre>
+        <p>redir needs somewhere to forward the connection to. A bare <code>nc</code> listener is enough &mdash; it never has to respond, since the crash happens on the client-facing side of <code>copyloop()</code> before anything comes back from upstream.</p>
+        <h4>&gt; A client that controls the exact byte count</h4>
+        <p>This detail mattered more than anything else. <code>curl</code>, or <code>nc</code> used interactively, don&#x27;t give precise control over how many bytes land in a single <code>write()</code>. The bug only fires when <code>read()</code> on redir&#x27;s side returns *exactly* <code>bufsize</code> in one call, so I reached for a short Python one-liner instead:</p>
+        <pre><code class="language-python">import socket
+s = socket.socket()
+s.connect((&#x27;127.0.0.1&#x27;, 9999))
+s.send(b&#x27;A&#x27; * 256)   # exactly bufsize bytes, one send() call
+s.close()</code></pre>
+        <p>A single <code>socket.send()</code> of exactly <code>bufsize</code> bytes over a loopback TCP connection reliably arrives as one <code>read()</code> on the other end at this size, which hits the boundary deterministically on every run.</p>
+        <h2>ASAN Had Something to Say</h2>
+        <pre><code class="language-bash">./redir -n -z 256 :9999 127.0.0.1:9998
+python3 -c &quot;import socket; s=socket.socket(); s.connect((&#x27;127.0.0.1&#x27;,9999)); s.send(b&#x27;A&#x27;*256); s.close()&quot;</code></pre>
+        <figure>
+            <img src="/assets/redir-asan-overflow.png" alt="AddressSanitizer heap-buffer-overflow report for redir, pointing at redir.c:641 in copyloop(), allocation at redir.c:611">
+            <figcaption>AddressSanitizer heap-buffer-overflow report for redir, pointing at redir.c:641 in copyloop(), allocation at redir.c:611</figcaption>
+        </figure>
+        <p>Not the bug I went looking for. Not even in the same function. But a heap-buffer-overflow is a heap-buffer-overflow, so I went and looked at what actually happened at <code>redir.c:641</code>.</p>
+        <h2>The Actual Bug</h2>
+        <p><code>copyloop()</code> is the function that shuffles bytes between the client and the target socket &mdash; the core of what redir does. It allocates one working buffer for the whole session:</p>
+        <pre><code class="language-c">buf = malloc(bufsize);                    // allocates exactly bufsize bytes (default: 8192)
+...
+bytes = read(insock, buf, bufsize);       // read() can return up to bufsize bytes
+if (bytes &lt;= 0)
+    break;
+
+buf[bytes] = 0;                           // when bytes == bufsize: writes to buf[bufsize]
+                                           // → one byte past the allocated region</code></pre>
+        <p><code>malloc(bufsize)</code> reserves exactly <code>bufsize</code> bytes, valid indices <code>0</code> through <code>bufsize - 1</code>. <code>read()</code> is allowed to fill the buffer completely, i.e. return exactly <code>bufsize</code>. When that happens, <code>buf[bytes]</code> is <code>buf[bufsize]</code> &mdash; one byte past the end of the allocation.</p>
+        <p>Any client that connects and sends exactly <code>bufsize</code> bytes in one write (8192 by default, or whatever <code>-z</code> was set to) triggers the out-of-bounds write. No authentication, no special payload content, just the right length.</p>
+        <h2>Why It Slipped Through</h2>
+        <p>This is the part that made it worth writing up. The bug isn&#x27;t a case of nobody caring about memory safety &mdash; it&#x27;s the opposite. It was *introduced* by a fix.</p>
+        <pre><code class="language-c">// before, pre-2016
+if ((bytes = read(insock, buf, bufsize)) &lt;= 0)
+	break;</code></pre>
+        <p>Coverity Scan flagged this as passing a non-NUL-terminated buffer to <code>ftp_clean()</code>&#x27;s internal <code>strchr()</code>/<code>sscanf()</code> calls &mdash; a legitimate finding. The fix, applied the same day across both the inbound and outbound read paths, added the terminator:</p>
+        <pre><code class="language-c">// after
+bytes = read(insock, buf, bufsize);
+if (bytes &lt;= 0)
+	break;
+
+buf[bytes] = 0;   // &lt;- new line, added to silence the Coverity warning</code></pre>
+        <p>Correct instinct, incomplete fix. Writing a terminator after the data needs one more byte of storage than the data itself. The allocation never grew to match. A static analyzer caught an uninitialized/unterminated-string issue and, in the process of fixing it, planted a heap overflow that&#x27;s been sitting in every release since &mdash; including the one I&#x27;d downloaded to chase a completely different CVE.</p>
+        <h2>ASan Says &quot;Bug.&quot; Does Stock glibc Agree?</h2>
+        <p>Once I had the finding written up, I ran into a question I should have asked before getting excited: does this actually *do* anything to a redir binary built the normal way, without a sanitizer? ASan and production glibc are not the same allocator, and it&#x27;s worth being precise about what each one actually enforces.</p>
+        <p>Under <code>-fsanitize=address</code>, every <code>malloc(n)</code> gets exactly <code>n</code> bytes of addressable memory, with a poisoned &quot;redzone&quot; placed immediately after &mdash; any access to it traps instantly. That&#x27;s by design: ASan is deliberately stricter than any real allocator, checking against the exact size the caller asked for, not whatever the allocator happens to hand back. That&#x27;s documented in <a href="https://github.com/google/sanitizers/wiki/AddressSanitizerAlgorithm">Google&#x27;s AddressSanitizer design notes</a> and in the <a href="https://www.usenix.org/conference/atc12/technical-sessions/presentation/serebryany">original ASan paper (Serebryany et al., USENIX ATC 2012)</a>.</p>
+        <p>Real glibc doesn&#x27;t work that way. <code>malloc()</code> rounds every request up to a 16-byte-aligned chunk and reserves 8 bytes for its own bookkeeping header &mdash; visible directly in <a href="https://github.com/bminor/glibc/blob/master/malloc/malloc.c">glibc&#x27;s `request2size()` macro</a>. I checked this with <code>malloc_usable_size()</code> across a few sizes:</p>
+        <pre><code>requested=  256  usable=  264  slack=  8
+requested= 8192  usable= 8200  slack=  8
+requested= 8200  usable= 8200  slack=  0   &lt;- no slack
+requested=  264  usable=  264  slack=  0   &lt;- no slack</code></pre>
+        <p>For any &quot;round&quot; <code>bufsize</code> &mdash; 256, 512, 4096, 8192, anything already a multiple of 16 &mdash; glibc silently hands back 8 bytes more than requested. <code>buf[bufsize] = 0</code> lands harmlessly in that padding. I rebuilt redir with a plain, unsanitized <code>gcc</code> and re-ran the exact same PoC against the default <code>bufsize</code> of 8192: no crash, nothing happened at all. ASan had correctly flagged undefined behavior; stock glibc simply absorbed it.</p>
+        <p>That&#x27;s the thing I actually took away from this, more than the bug itself: <strong>a sanitizer finding proves code violates its contract — it doesn&#x27;t by itself prove a given deployment will misbehave.</strong> Both can be true at once, and here they were. Our original PoC wasn&#x27;t wrong; it was answering a narrower question than I initially assumed.</p>
+        <h2>But Some <code>-z</code> Values Aren&#x27;t &quot;Round&quot;</h2>
+        <p>The rounding only produces slack when <code>bufsize</code> is already a multiple of 16. Pick a value where <code>bufsize mod 16 == 8</code> instead &mdash; <code>-z 264</code>, <code>-z 8200</code> &mdash; and <code>malloc_usable_size()</code> returns exactly <code>bufsize</code>, no padding at all. I rebuilt redir unsanitized again, ran it with <code>-z 8200</code>, sent exactly 8200 bytes, and this time:</p>
+        <pre><code>double free or corruption (!prev)</code></pre>
+        <p><code>SIGABRT</code>, confirmed with <code>coredumpctl</code>. A real crash on stock glibc, no instrumentation required &mdash; but only reachable if whoever runs redir happens to set <code>-z</code> to one of these specific &quot;unlucky&quot; values. Nobody picks <code>-z 8200</code> by instinct; it&#x27;s not a power of two, not a round number, not the default. Possible, but not the default-configuration DoS the initial writeup implied.</p>
+        <h2>Would This Get You to RCE?</h2>
+        <p>I checked, because a heap bug write-up that skips this question isn&#x27;t finished. Short answer: no.</p>
+        <p>The <code>buf[bufsize] = 0</code> write, in the case where it does escape the chunk (<code>-z 8200</code>), lands on the low byte of the *next* chunk&#x27;s size-and-flags word &mdash; for a fresh connection, that next chunk is redir&#x27;s own top (&quot;wilderness&quot;) chunk. Zeroing that byte clears the <code>PREV_INUSE</code> flag glibc uses to track whether the preceding chunk is still allocated. When <code>copyloop()</code> later calls <code>free(buf)</code>, glibc&#x27;s <code>_int_free_merge_chunk()</code> checks exactly that bit on the following chunk before touching anything else:</p>
+        <pre><code class="language-c">/* Or whether the block is actually not marked used.  */
+if (__glibc_unlikely (!prev_inuse(nextchunk)))
+  malloc_printerr (&quot;double free or corruption (!prev)&quot;);</code></pre>
+        <p>&mdash; <a href="https://github.com/bminor/glibc/blob/master/malloc/malloc.c">`malloc/malloc.c`, glibc source (mirror)</a></p>
+        <p>That check fires and aborts the process *before* any unlinking, consolidation, or use of attacker-influenced metadata takes place. It&#x27;s exactly the kind of hardening glibc has carried for years to shut down classic heap-metadata exploitation techniques (see <a href="https://github.com/shellphish/how2heap">how2heap</a> for what those attacks look like when the checks *aren&#x27;t* in the way) &mdash; there&#x27;s no window between the corruption landing and the process dying for an attacker to do anything with it.</p>
+        <p>Even setting that check aside, redir&#x27;s own code doesn&#x27;t hand an attacker the pieces a heap exploit usually needs: one <code>malloc()</code> per connection, one <code>free()</code> at teardown, no further allocations in between to groom or reuse the corrupted metadata, and the process is a freshly forked child that exits immediately after. There&#x27;s nothing left to build on.</p>
+        <p>So: a genuine memory-safety violation, a confirmed real crash under specific non-default configurations, and a hard ceiling at Denial of Service &mdash; not RCE.</p>
+        <h2>Impact</h2>
+        <ul>
+            <li><strong>CWE-122</strong> &mdash; Heap-based Buffer Overflow, one byte, NUL-only write.</li>
+            <li>No authentication required to trigger the underlying write; any TCP client reaching redir&#x27;s listening port that sends exactly <code>bufsize</code> bytes hits it.</li>
+            <li><strong>Under default settings, no observable effect on a normally-compiled redir</strong> &mdash; glibc&#x27;s chunk-size rounding absorbs the extra byte. The bug is real (confirmed by ASan/UBSan) but silent in the most common deployment.</li>
+            <li><strong>Under specific non-default `bufsize` values (`bufsize mod 16 == 8`, e.g. `-z 8200`, `-z 264`)</strong>, it&#x27;s a confirmed, sanitizer-free crash on stock glibc (<code>double free or corruption (!prev)</code>, SIGABRT) &mdash; real Denial of Service, but conditional on operator configuration.</li>
+            <li>Not exploitable beyond DoS: glibc&#x27;s own <code>_int_free</code> consistency checks abort before any attacker-controlled corruption can be leveraged, and redir&#x27;s code path never performs the additional allocations a heap exploit would need to build on it.</li>
+        </ul>
+        <p>The fix is one word:</p>
+        <pre><code class="language-c">// redir.c:611
+buf = malloc(bufsize + 1);</code></pre>
+        <p><code>read()</code> still consumes at most <code>bufsize</code> bytes, so <code>buf[bytes] = 0</code> always lands inside the allocation. I sent exactly this change upstream as <a href="https://github.com/troglobit/redir/pull/47">PR #47</a>, currently open and awaiting review from the maintainer.</p>
+        <h2>Where This Leaves Me</h2>
+        <p>I still haven&#x27;t popped a shell through <code>CVE-2020-37182</code> &mdash; that door was already closed by the time I got there. But I walked away with a real, upstream-reported bug nobody was looking for, and a reminder that&#x27;s easy to forget when you&#x27;re staring at a target CVE with tunnel vision: read the *current* source before you build your training exercise around it, and when a &quot;defensive&quot; commit adds a write, check whether it also added the byte to hold it.</p>
+        <p>A CVE request is pending; I&#x27;ll update this post once one is assigned and PR #47 lands.</p>
+    </main>
+
+    <footer>
+        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>
+        <p><a href="/privacy.html">Privacy Policy</a></p>
+    </footer>
+    <script src="/assets/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
