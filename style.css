@@ -71,11 +71,14 @@ header::before {
 }
 
 #heading {
-    font-size: clamp(0.85rem, 4.6vw, 1.8em);
+    font-size: clamp(0.7rem, 3.6vw, 1.8em);
     font-weight: bold;
     color: #4af626;
     white-space: nowrap;
     max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
 }
 
 #subheading {
