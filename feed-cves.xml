@@ -7,6 +7,13 @@
     <description>CVE disclosures by Lennart Hostettler — Security Engineer &amp; Penetration Tester</description>
     <language>en</language>
     <item>
+      <title>CVE-2026-57308 — SQL Injection in Apache Syncope</title>
+      <link>https://hostettler.pro/posts/apache-syncope-sqli.html</link>
+      <guid>https://hostettler.pro/posts/apache-syncope-sqli.html</guid>
+      <pubDate>Mon, 20 Jul 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 9.8 (Critical) — CVE-2026-57308 — SQL Injection in Apache Syncope</description>
+    </item>
+    <item>
       <title>CVE-2026-55872 — Stored XSS in GYM-One v1.4.0</title>
       <link>https://hostettler.pro/posts/gymone-stored-xss.html</link>
       <guid>https://hostettler.pro/posts/gymone-stored-xss.html</guid>

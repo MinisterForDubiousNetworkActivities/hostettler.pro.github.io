@@ -230,6 +230,30 @@ def md_to_html(text):
                 i += 1
                 continue
 
+        # Markdown table
+        if stripped.startswith('|') and '|' in stripped:
+            flush()
+            table_lines = [stripped]
+            i += 1
+            # Collect separator and body rows
+            while i < len(lines) and lines[i].strip().startswith('|'):
+                table_lines.append(lines[i].strip())
+                i += 1
+            # Render table
+            output.append('        <table class="meta-table">')
+            for row_idx, row_line in enumerate(table_lines):
+                # Skip separator row (contains only |, -, spaces, :)
+                if re.match(r'^\|[\s:|+-]+\|$', row_line):
+                    continue
+                cells = [c.strip() for c in row_line.split('|')]
+                cells = [c for c in cells if c]  # remove empty strings
+                output.append('            <tr>')
+                for cell in cells:
+                    output.append(f'                <td>{inline_md(cell)}</td>')
+                output.append('            </tr>')
+            output.append('        </table>')
+            continue
+
         # List item
         if stripped.startswith('- '):
             if state != 'ul':
@@ -408,8 +432,8 @@ def compute_stats(findings, trash_findings, undisclosed_findings):
         'critical':    sum(1 for s in scores if s >= 9.0),
         'high':        sum(1 for s in scores if 7.0 <= s < 9.0),
         'medium':      sum(1 for s in scores if 4.0 <= s < 7.0),
-        'published':   len(findings),
-        'pending':     len(undisclosed_findings),
+        'published':   sum(1 for f in findings if re.match(r'CVE-\d{4}-\d+', f['meta'].get('CVE', '').strip())),
+        'pending':     len(all_f) - sum(1 for f in findings if re.match(r'CVE-\d{4}-\d+', f['meta'].get('CVE', '').strip())),
         'trash':       len(trash_findings),
         'publications': count_publications(),
     }
@@ -421,13 +445,13 @@ def render_stats_block(stats, show_publications=True):
     pub_label = "Publications" if pb != 1 else "Publication"
     lines = (
         f'        <p class="stat-line">'
-        f'<b>{pu}</b> CVEs &nbsp;&mdash;&nbsp; '
+        f'<b>{t}</b> Findings &nbsp;&mdash;&nbsp; '
         f'<span class="sev-critical">{cr} Critical</span> &middot; '
         f'<span class="sev-high">{hi} High</span> &middot; '
         f'<span class="sev-medium">{me} Medium</span>'
         f'</p>\n'
         f'        <p class="stat-line stat-muted">'
-        f'{pu} Published &middot; {pe + tr} Pending'
+        f'{pu} CVEs Published &middot; {pe} Pending'
         f'</p>'
     )
     if show_publications:
@@ -931,8 +955,7 @@ def render_publications_html(pub_articles):
         + '            </ul>\n'
         '        </nav>\n'
         '        <span id="subheading">\n'
-        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br><br>\n'
-        '            I don\'t hate Bill Gates because he\'s a reptilian lizard injecting 5G chips from the hollow earth &mdash; I hate him because he invented Windows.\n'
+        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong>\n'
         '        </span>\n'
         '    </header>\n'
         '\n'
@@ -998,8 +1021,8 @@ def render_cves_html(findings, trash_findings=None, undisclosed_findings=None, s
         trash_section = (
             '\n'
             '        <section id="trash-cves">\n'
-            '            <h2>Trash CVEs</h2>\n'
-            '            <p><em>Low-quality findings in low-quality projects with at least a few hundred stars. Details withheld pending CVE assignment.</em></p>\n'
+            '            <h2>Additional Findings</h2>\n'
+            '            <p><em>Findings in smaller open-source projects, reported to the maintainers. Details withheld pending CVE assignment.</em></p>\n'
             + '\n'.join(trash_entries) + '\n'
             '        </section>'
         )
@@ -1047,8 +1070,7 @@ def render_cves_html(findings, trash_findings=None, undisclosed_findings=None, s
         + '            </ul>\n'
         '        </nav>\n'
         '        <span id="subheading">\n'
-        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong><br><br>\n'
-        '            I don\'t hate Bill Gates because he\'s a reptilian lizard injecting 5G chips from the hollow earth &mdash; I hate him because he invented Windows.\n'
+        '            <strong>Security Engineer &amp; Penetration Tester from Germany</strong>\n'
         + (f'            <br><br>\n{stats_block}\n' if stats_block else '')
         + '        </span>\n'
         '    </header>\n'

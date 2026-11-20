@@ -19,6 +19,13 @@
       <pubDate>Thu, 05 Jun 2025 00:00:00 +0000</pubDate>
     </item>
     <item>
+      <title>CVE-2026-57308 — SQL Injection in Apache Syncope</title>
+      <link>https://hostettler.pro/posts/apache-syncope-sqli.html</link>
+      <guid>https://hostettler.pro/posts/apache-syncope-sqli.html</guid>
+      <pubDate>Mon, 20 Jul 2026 00:00:00 +0000</pubDate>
+      <description>CVSS 9.8 (Critical) — CVE-2026-57308 — SQL Injection in Apache Syncope</description>
+    </item>
+    <item>
       <title>Think Twice Before Opening That Repo in Claude</title>
       <link>https://hostettler.pro/posts/claude-hooks-attack.html</link>
       <guid>https://hostettler.pro/posts/claude-hooks-attack.html</guid>

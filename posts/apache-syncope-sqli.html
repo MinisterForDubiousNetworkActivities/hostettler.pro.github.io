@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CVE-2026-57308 | SQL Injection in Apache Syncope | Lennart Hostettler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SQL Injection in Apache Syncope. Discovered by Lennart Hostettler.">
+    <meta name="robots" content="index, follow">
+
+    <meta property="og:title" content="CVE-2026-57308 | SQL Injection in Apache Syncope">
+    <meta property="og:description" content="SQL Injection in Apache Syncope. Discovered by Lennart Hostettler.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://hostettler.pro/posts/apache-syncope-sqli.html">
+    <meta property="og:image" content="https://hostettler.pro/preview-image.jpg">
+    <meta property="og:image:width" content="1280">
+    <meta property="og:image:height" content="853">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CVE-2026-57308 | SQL Injection in Apache Syncope">
+    <meta name="twitter:description" content="SQL Injection in Apache Syncope. Discovered by Lennart Hostettler.">
+    <meta name="twitter:image" content="https://hostettler.pro/preview-image.jpg">
+
+    <link rel="canonical" href="https://hostettler.pro/posts/apache-syncope-sqli.html">
+    <link rel="icon" href="/favicon.ico">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/assets/atom-one-dark.min.css">
+
+    <script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "SQL Injection in Apache Syncope",
+    "datePublished": "2026-06-20",
+    "url": "https://hostettler.pro/posts/apache-syncope-sqli.html",
+    "author": {
+        "@type": "Person",
+        "name": "Lennart Hostettler",
+        "url": "https://hostettler.pro/"
+    }
+}
+    </script>
+</head>
+<body>
+    <header>
+        <h1 id="heading">lennart.hostettler@debian:~/posts</h1>
+        <nav id="menu">
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/publications.html">Publications</a></li>
+                <li><a class="active" href="/cves.html">CVEs</a></li>
+                <li><a href="https://github.com/MinisterForDubiousNetworkActivities" title="GitHub" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg></a></li>
+                <li><a href="https://www.linkedin.com/in/lennart-hostettler-8a2680297/" title="LinkedIn" aria-label="LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a></li>
+                <li><a href="/feeds.html" title="RSS Feeds" aria-label="RSS Feeds"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg></a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <p class="post-date">20/06/2026 &mdash; Security Advisory</p>
+        <h2>CVE-2026-57308 &mdash; SQL Injection in Apache Syncope</h2>
+
+        <table class="meta-table">
+            <tr><td>Product</td><td><a href="https://syncope.apache.org/">Apache Syncope</a></td></tr>
+            <tr><td>Version</td><td>3.0.0 &ndash; 3.0.16 (all), 4.0.0-M0+</td></tr>
+            <tr><td>File</td><td><code>JPAAuditConfDAO.java</code> (3.0.x), <code>JPAAuditEventDAO.java</code> (4.x)</td></tr>
+            <tr><td>CVE</td><td>CVE-2026-57308</td></tr>
+            <tr><td>CWE</td><td>CWE-89 &mdash; Improper Neutralization of Special Elements used in an SQL Command</td></tr>
+            <tr><td>CVSS 3.1 Vector</td><td>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:L</td></tr>
+            <tr><td>CVSS Score</td><td><span class="severity-high">8.8 (High)</span></td></tr>
+            <tr><td>Vendor Severity</td><td>Important (Apache Software Foundation)</td></tr>
+            <tr><td>Auth Required</td><td>Yes (<code>AUDIT_SEARCH</code> entitlement)</td></tr>
+            <tr><td>Discovered by</td><td>Lennart Hostettler</td></tr>
+        </table>
+
+        <h2>Description</h2>
+        <p>Apache Syncope constructs native SQL queries for audit log searches by directly concatenating user-supplied sort parameters into an <code>ORDER BY</code> clause without sanitization or parameterization. An authenticated user with minimal privileges (<code>AUDIT_SEARCH</code> entitlement) can abuse this to execute arbitrary SQL queries against the backend database via the <code>/syncope/rest/audit/entries</code> endpoint.</p>
+        <p>The vulnerability exists in two classes across two branches:</p>
+        <table class="meta-table">
+            <tr>
+                <td>Branch</td>
+                <td>Class</td>
+                <td>Introduced</td>
+            </tr>
+            <tr>
+                <td>3.0.x</td>
+                <td>JPAAuditConfDAO.java</td>
+                <td>2021-07-17</td>
+            </tr>
+            <tr>
+                <td>4.0.x+</td>
+                <td>JPAAuditEventDAO.java</td>
+                <td>2024-03-11</td>
+            </tr>
+        </table>
+        <h2>Vulnerable Code</h2>
+        <p><strong>3.0.x branch</strong> (<code>JPAAuditConfDAO.java</code>):</p>
+        <pre><code class="language-java">if (!orderBy.isEmpty()) {
+    queryString += &quot; ORDER BY &quot; + orderBy.stream()
+        .map(clause -&gt; clause.getField()           // &lt;-- unsanitized user input
+            + &#x27; &#x27; + clause.getDirection().name())
+        .collect(Collectors.joining(&quot;,&quot;));
+}
+Query query = entityManager().createNativeQuery(queryString);</code></pre>
+        <p><strong>4.0.x branch</strong> (<code>JPAAuditEventDAO.java</code>, line ~172):</p>
+        <pre><code class="language-java">if (!pageable.getSort().isEmpty()) {
+    queryString += &quot; ORDER BY &quot; + pageable.getSort().stream()
+        .map(clause -&gt;
+            (&quot;when&quot;.equals(clause.getProperty())
+                ? &quot;event_date&quot;
+                : clause.getProperty())          // &lt;-- unsanitized user input
+            + &#x27; &#x27; + clause.getDirection().name())
+        .collect(Collectors.joining(&quot;,&quot;));
+}
+Query query = entityManager.createNativeQuery(queryString);</code></pre>
+        <h2>Exploitation</h2>
+        <p>The <code>orderby</code> HTTP query parameter flows from the REST layer directly into the SQL query without validation. The parser splits the value by space, taking only the first token as the column name. This can be trivially bypassed using a tab character (<code>%09</code>), which PostgreSQL accepts as whitespace.</p>
+        <h4>&gt; Attack endpoint:</h4>
+        <pre><code>GET /syncope/rest/audit/entries?orderby=&lt;injection&gt;&amp;page=1&amp;size=1&amp;type=LOGIC</code></pre>
+        <p><strong>Minimal payload example</strong> (time-based blind SQLi with 3-second delay):</p>
+        <pre><code>orderby=event_date%3BSELECT%09pg_sleep(3)--%20ASC</code></pre>
+        <p>This results in the following SQL being executed:</p>
+        <pre><code class="language-sql">SELECT MESSAGE FROM AuditEntry
+WHERE MESSAGE LIKE &#x27;%&quot;type&quot;:&quot;LOGIC&quot;%&#x27;
+ORDER BY event_date;
+SELECT pg_sleep(3)-- ASC</code></pre>
+        <p>The stacked query (<code>SELECT ... ; SELECT ...</code>) causes the configured delay, confirming code injection.</p>
+        <h2>Privilege Level Requirements</h2>
+        <p>The minimum required privilege is <code>AUDIT_SEARCH</code> &mdash; a standard read-only entitlement commonly granted to auditor and compliance roles, <strong>not exclusive to administrators</strong>:</p>
+        <table class="meta-table">
+            <tr>
+                <td>Account</td>
+                <td>Entitlement</td>
+                <td>Endpoint Access</td>
+                <td>SQLi Exploitable</td>
+            </tr>
+            <tr>
+                <td>admin</td>
+                <td>All</td>
+                <td>Yes (HTTP 200)</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td>testauditor</td>
+                <td>AUDIT_SEARCH</td>
+                <td>Yes (HTTP 200)</td>
+                <td><strong>Yes (verified)</strong></td>
+            </tr>
+            <tr>
+                <td>testmonitor</td>
+                <td>LOGGER_LIST</td>
+                <td>No (HTTP 403)</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td>Anonymous</td>
+                <td>None</td>
+                <td>No (HTTP 401)</td>
+                <td>No</td>
+            </tr>
+        </table>
+        <h2>Impact</h2>
+        <p>An authenticated attacker with <code>AUDIT_SEARCH</code> can:</p>
+        <h4>&gt; Confidentiality (High):</h4>
+        <ul>
+            <li>Extract all data accessible to the <code>syncope</code> database user: user credentials, password hashes, security tokens, group memberships, full audit history</li>
+        </ul>
+        <h4>&gt; Integrity (High):</h4>
+        <ul>
+            <li>Use stacked queries to execute <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> statements</li>
+            <li>Tamper with user accounts, roles, and entitlements</li>
+            <li>Manipulate audit logs to cover tracks</li>
+        </ul>
+        <h4>&gt; Availability (Low):</h4>
+        <ul>
+            <li>Repeated <code>pg_sleep()</code> calls saturate database connection pools, degrading service performance</li>
+        </ul>
+        <h2>Remediation</h2>
+        <h4>&gt; Primary Fix &mdash; Whitelist Validation:</h4>
+        <p>Replace direct column concatenation with a strict allowlist of permitted sort columns:</p>
+        <pre><code class="language-java">private static final Set&lt;String&gt; ALLOWED_SORT_COLUMNS = Set.of(
+    &quot;event_date&quot;, &quot;type&quot;, &quot;category&quot;,
+    &quot;subcategory&quot;, &quot;outcome&quot;, &quot;key&quot;
+);
+
+String col = &quot;when&quot;.equals(clause.getProperty())
+    ? &quot;event_date&quot;
+    : clause.getProperty();
+
+if (!ALLOWED_SORT_COLUMNS.contains(col)) {
+    throw new IllegalArgumentException(&quot;Invalid sort column: &quot; + col);
+}
+
+queryString += &quot; ORDER BY &quot; + col + &quot; &quot;
+    + clause.getDirection().name();</code></pre>
+        <h4>&gt; Alternative Fix &mdash; JPA Criteria API:</h4>
+        <p>Replace native SQL queries with JPA Criteria API, which handles parameterization automatically:</p>
+        <pre><code class="language-java">CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+CriteriaQuery&lt;AuditEntry&gt; cq = cb.createQuery(AuditEntry.class);
+Root&lt;AuditEntry&gt; root = cq.from(AuditEntry.class);
+
+List&lt;Order&gt; orders = pageable.getSort().stream()
+    .map(o -&gt; o.isAscending()
+        ? cb.asc(root.get(o.getProperty()))
+        : cb.desc(root.get(o.getProperty())))
+    .collect(Collectors.toList());
+
+cq.orderBy(orders);</code></pre>
+        <h4>&gt; Additional Mitigations:</h4>
+        <p>1. Restrict database user privileges to DML only (no DDL: <code>DROP</code>, <code>CREATE</code>, <code>ALTER</code>) 2. Add input validation layer with <code>@Pattern</code> constraint on the <code>orderby</code> parameter 3. Deploy WAF rule to block requests containing SQL keywords (<code>SELECT</code>, <code>INSERT</code>, <code>DROP</code>, <code>pg_sleep</code>)</p>
+        <h2>Vendor Response</h2>
+        <p>The Apache Software Foundation responded quickly and professionally throughout the coordinated disclosure process, communicating transparently and working toward a timely fix. This is how responsible vendor engagement should work.</p>
+        <h2>References</h2>
+        <ul>
+            <li><a href="https://www.cve.org/CVERecord?id=CVE-2026-57308">CVE-2026-57308</a></li>
+            <li><a href="https://lists.apache.org/thread/g0gpctj90pbczbjl5jr33t8gr1gltg8v">Apache Syncope security advisory (mailing list)</a></li>
+            <li><a href="https://github.com/apache/syncope/commit/74a626cf4b">Apache Syncope GitHub — SYNCOPE-1615</a></li>
+            <li><a href="https://github.com/apache/syncope/commit/0020ef75d4">Apache Syncope GitHub — SYNCOPE-1810</a></li>
+        </ul>
+    </main>
+
+    <footer>
+        <p>Contact: <a href="mailto:lennart.hostettler@proton.me">💌 lennart.hostettler@proton.me</a></p>
+        <p><a href="/privacy.html">Privacy Policy</a></p>
+    </footer>
+    <script src="/assets/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</body>
+</html>
